@@ -11,8 +11,10 @@ import click
 import isort.main
 import pycodestyle
 import pylint.lint
+import typeguard
 
-import pulumi_state_splitter
+with typeguard.install_import_hook("pulumi_state_splitter"):
+    import pulumi_state_splitter
 
 
 class TestStyle(unittest.TestCase):

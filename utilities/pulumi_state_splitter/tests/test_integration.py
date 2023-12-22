@@ -1,7 +1,6 @@
 """Integration tests with Pulumi."""
 
 import contextlib
-import json
 import os
 import pathlib
 import tempfile
@@ -9,6 +8,10 @@ import unittest
 import unittest.mock
 
 import pulumi
+import typeguard
+
+with typeguard.install_import_hook("pulumi_state_splitter"):
+    import pulumi_state_splitter.state_file
 
 
 @unittest.mock.patch.dict(os.environ, PULUMI_CONFIG_PASSPHRASE="very secret")
@@ -32,14 +35,6 @@ class TestPulumiIntegration(unittest.TestCase):
             ),
         )
 
-    def _state_path(self, stack_name):
-        fn = f"{stack_name}.json"
-        return self._backend_dir / ".pulumi" / "stacks" / self._PROJECT_NAME / fn
-
-    def _state(self, stack_name):
-        with self._state_path(stack_name).open() as f:
-            return json.load(f)
-
     @staticmethod
     def _pulumi_program_1():
         """A test pulumi program."""
@@ -53,7 +48,12 @@ class TestPulumiIntegration(unittest.TestCase):
             stack_name=stack_name,
             opts=self._workspace_options,
         )
+        state = pulumi_state_splitter.state_file.State(
+            backend_dir=self._backend_dir,
+            project_name=self._PROJECT_NAME,
+            stack_name=stack_name,
+        )
         self.assertEqual(
-            self._state(stack_name)["checkpoint"]["stack"],
+            state.contents["checkpoint"]["stack"],
             f"organization/{self._PROJECT_NAME}/{stack_name}",
         )

@@ -4,7 +4,10 @@ import sys
 import unittest
 import unittest.mock
 
-import pulumi_state_splitter
+import typeguard
+
+with typeguard.install_import_hook("pulumi_state_splitter"):
+    import pulumi_state_splitter
 
 
 class TestMain(unittest.TestCase):
