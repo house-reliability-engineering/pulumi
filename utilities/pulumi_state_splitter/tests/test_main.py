@@ -1,4 +1,4 @@
-"""Testing the pulumi_state_splitter.main function."""
+"""Testing the `pulumi_state_splitter.main` function."""
 
 import sys
 import unittest
@@ -11,7 +11,7 @@ with typeguard.install_import_hook("pulumi_state_splitter"):
 
 
 class TestMain(unittest.TestCase):
-    """Tests the pulumi_state_splitter.main function"""
+    """Testing the `pulumi_state_splitter.main` function."""
 
     def test_smoke(self):
         """A smoke test."""

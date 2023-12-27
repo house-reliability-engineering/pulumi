@@ -12,6 +12,21 @@ files = [
 ]
 
 [[package]]
+name = "arpeggio"
+version = "2.0.2"
+description = "Packrat parser interpreter"
+optional = false
+python-versions = "*"
+files = [
+    {file = "Arpeggio-2.0.2-py2.py3-none-any.whl", hash = "sha256:f7c8ae4f4056a89e020c24c7202ac8df3e2bc84e416746f20b0da35bb1de0250"},
+    {file = "Arpeggio-2.0.2.tar.gz", hash = "sha256:c790b2b06e226d2dd468e4fbfb5b7f506cec66416031fde1441cf1de2a0ba700"},
+]
+
+[package.extras]
+dev = ["mike", "mkdocs", "twine", "wheel"]
+test = ["coverage", "coveralls", "flake8", "pytest"]
+
+[[package]]
 name = "astroid"
 version = "3.0.2"
 description = "An abstract syntax tree for Python with inference support."
@@ -21,6 +36,24 @@ files = [
     {file = "astroid-3.0.2-py3-none-any.whl", hash = "sha256:d6e62862355f60e716164082d6b4b041d38e2a8cf1c7cd953ded5108bac8ff5c"},
     {file = "astroid-3.0.2.tar.gz", hash = "sha256:4a61cf0a59097c7bb52689b0fd63717cd2a8a14dc9f1eee97b82d814881c8c91"},
 ]
+
+[[package]]
+name = "attrs"
+version = "23.1.0"
+description = "Classes Without Boilerplate"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "attrs-23.1.0-py3-none-any.whl", hash = "sha256:1f28b4522cdc2fb4256ac1a020c78acf9cba2c6b461ccd2c126f3aa8e8335d04"},
+    {file = "attrs-23.1.0.tar.gz", hash = "sha256:6279836d581513a26f1bf235f9acd333bc9115683f14f7e8fae46c98fc50e015"},
+]
+
+[package.extras]
+cov = ["attrs[tests]", "coverage[toml] (>=5.3)"]
+dev = ["attrs[docs,tests]", "pre-commit"]
+docs = ["furo", "myst-parser", "sphinx", "sphinx-notfound-page", "sphinxcontrib-towncrier", "towncrier", "zope-interface"]
+tests = ["attrs[tests-no-zope]", "zope-interface"]
+tests-no-zope = ["cloudpickle", "hypothesis", "mypy (>=1.1.1)", "pympler", "pytest (>=4.3.0)", "pytest-mypy-plugins", "pytest-xdist[psutil]"]
 
 [[package]]
 name = "black"
@@ -274,6 +307,27 @@ files = [
 ]
 
 [[package]]
+name = "parver"
+version = "0.5"
+description = "Parse and manipulate version numbers."
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "parver-0.5-py3-none-any.whl", hash = "sha256:2281b187276c8e8e3c15634f62287b2fb6fe0efe3010f739a6bd1e45fa2bf2b2"},
+    {file = "parver-0.5.tar.gz", hash = "sha256:b9fde1e6bb9ce9f07e08e9c4bea8d8825c5e78e18a0052d02e02bf9517eb4777"},
+]
+
+[package.dependencies]
+arpeggio = ">=1.7"
+attrs = ">=19.2"
+
+[package.extras]
+docs = ["furo", "sphinx"]
+docstest = ["doc8"]
+pep8test = ["flake8", "pep8-naming"]
+test = ["hypothesis", "pretend", "pytest"]
+
+[[package]]
 name = "pathspec"
 version = "0.12.1"
 description = "Utility library for gitignore style pattern matching of file paths."
@@ -336,6 +390,22 @@ protobuf = ">=4.21,<5.0"
 pyyaml = ">=6.0,<7.0"
 semver = ">=2.13,<3.0"
 six = ">=1.12,<2.0"
+
+[[package]]
+name = "pulumi-command"
+version = "0.9.2"
+description = "The Pulumi Command Provider enables you to execute commands and scripts either locally or remotely as part of the Pulumi resource model."
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "pulumi_command-0.9.2-py3-none-any.whl", hash = "sha256:7fb72f1e2fa0f63912183361173416e0b1a72e22b1198504fef794f9d60b2571"},
+    {file = "pulumi_command-0.9.2.tar.gz", hash = "sha256:34c265e6ce327ddf950420cff07a313b67e111ad03d1f371ad451a3cf1b7ea0c"},
+]
+
+[package.dependencies]
+parver = ">=0.2.1"
+pulumi = ">=3.0.0,<4.0.0"
+semver = ">=2.8.1"
 
 [[package]]
 name = "pycodestyle"
@@ -635,4 +705,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "553c59562a1a9b2661e700d70c055fb27893ae6ace857d19e91b3cbe9f7aa373"
+content-hash = "b4de48e250196ab8ab3f75f2c1182d6e068091eb9beeeee5b03dcf48476553a3"

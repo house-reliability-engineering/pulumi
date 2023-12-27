@@ -37,6 +37,8 @@ fi
 
 PATH="$PWD/bin:$PATH"
 
+set +o errexit
+
 poetry run \
   coverage run \
     --source=pulumi_state_splitter \

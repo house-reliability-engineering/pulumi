@@ -9,6 +9,12 @@ import unittest
 import black
 import click
 import isort.main
+
+# this is to avoid:
+#   RuntimeError: dictionary changed size during iteration
+# in asteroid from pylint
+import pulumi_command.local.command as _
+import pulumi_command.remote.command as _
 import pycodestyle
 import pylint.lint
 import typeguard
@@ -18,7 +24,7 @@ with typeguard.install_import_hook("pulumi_state_splitter"):
 
 
 class TestStyle(unittest.TestCase):
-    """Tests the style of the package and tests code."""
+    """Testing the style of the package and tests code."""
 
     _package_paths = (
         str(pathlib.Path(pulumi_state_splitter.__file__).parent),
@@ -27,7 +33,18 @@ class TestStyle(unittest.TestCase):
 
     def test_isort(self):
         """Checks imports order with isort."""
-        isort.main.main(["--check-only", *self._package_paths])
+        try:
+            isort.main.main(
+                [
+                    "--check-only",
+                    # otherwise it fights with black over
+                    # an empty line in imports of this file
+                    "--ignore-whitespace",
+                    *self._package_paths,
+                ]
+            )
+        except SystemExit as e:
+            self.assertEqual(e.code, 0)
 
     def test_pylint(self):
         """Checks style with pylint."""
