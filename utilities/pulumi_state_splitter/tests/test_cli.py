@@ -31,7 +31,7 @@ class TestCli(util.TmpDirTest):
             ],
         )
     )
-    def test_cli(self, set_backend_dir, command, all_, stacks):
+    def test_cli(self, set_backend_dir, command, all_stacks, stacks):
         """Testing `pulumi_state_splitter.cli`."""
 
         input_, want = (
@@ -48,11 +48,13 @@ class TestCli(util.TmpDirTest):
                     self._tmp_dir,
                 ]
             )
-        args.extend([command, *stacks])
-        if all_:
-            args.append("--all")
+        args.append(command)
+        for stack in stacks:
+            args.extend(["--stack", stack])
+        if all_stacks:
+            args.append("--all-stacks")
 
-        if all_ == bool(stacks):
+        if all_stacks == bool(stacks):
             with self.assertRaises(ValueError):
                 self._cli_run(*args)
             return

@@ -145,10 +145,10 @@ class TestPulumiIntegration(util.TmpDirTest):
         )
 
         def split():
-            self._cli_run("split", f"{self._PROJECT_NAME}/test-stack")
+            self._cli_run("split", "--stack", f"{self._PROJECT_NAME}/test-stack")
 
         def unsplit():
-            self._cli_run("unsplit", f"{self._PROJECT_NAME}/test-stack")
+            self._cli_run("unsplit", "--stack", f"{self._PROJECT_NAME}/test-stack")
 
         split()
         unsplit()
@@ -217,10 +217,10 @@ class TestPulumiIntegration(util.TmpDirTest):
         )
 
         def split():
-            self._cli_run("split", "--all")
+            self._cli_run("split", "--all-stacks")
 
         def unsplit():
-            self._cli_run("unsplit", "--all")
+            self._cli_run("unsplit", "--all-stacks")
 
         split()
         self._check_outputs(stack_with_output.name, {"test-output": test_string})

@@ -39,20 +39,24 @@ def _command(f):
     @cli.command()
     @click.option(
         "-a",
-        "--all",
-        "all_",
+        "--all-stacks",
         default=False,
         is_flag=True,
     )
-    @click.argument("stacks", nargs=-1, callback=_from_paths)
+    @click.option(
+        "-s",
+        "--stack",
+        callback=_from_paths,
+        multiple=True,
+    )
     @click.pass_obj
     @functools.wraps(f)
-    def check_arguments(backend_dir, all_, stacks):
-        if all_ and stacks:
-            raise ValueError("--all is mutually exclusive with stacks arguments")
-        if not (all_ or stacks):
-            raise ValueError("either --all or stacks expected")
-        f(backend_dir, all_, stacks)
+    def check_arguments(backend_dir, all_stacks, stack):
+        if all_stacks and stack:
+            raise ValueError("--all-stacks is mutually exclusive with --stack")
+        if not (all_stacks or stack):
+            raise ValueError("either --all-stacks or --stack expected")
+        f(backend_dir, all_stacks, stack)
 
     return check_arguments
 
@@ -60,11 +64,11 @@ def _command(f):
 @_command
 def split(
     backend_dir: pathlib.Path,
-    all_: bool,
+    all_stacks: bool,
     stacks: Sequence[pulumi_state_splitter.stored_state.StackName],
 ):
     """Splits single Pulumi stack state files into multiple files each."""
-    if all_:
+    if all_stacks:
         stacks = pulumi_state_splitter.state_file.StateFile.find(backend_dir)
     for stack_name in stacks:
         state_file = pulumi_state_splitter.state_file.StateFile(
@@ -78,11 +82,11 @@ def split(
 @_command
 def unsplit(
     backend_dir: pathlib.Path,
-    all_: bool,
+    all_stacks: bool,
     stacks: Sequence[pulumi_state_splitter.stored_state.StackName],
 ):
     """Merges split Pulumi stack states into single state file each."""
-    if all_:
+    if all_stacks:
         stacks = pulumi_state_splitter.split.StateDir.find(backend_dir)
     for stack_name in stacks:
         state_dir = pulumi_state_splitter.split.StateDir(
