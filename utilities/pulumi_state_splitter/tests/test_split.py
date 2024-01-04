@@ -27,8 +27,7 @@ class TestSplitPure(unittest.TestCase):
         """Testing `StateDir.path`."""
         state_dir = pulumi_state_splitter.split.StateDir(
             backend_dir=pathlib.Path("var/tmp"),
-            project_name="test-project",
-            stack_name="test-stack",
+            stack_name=data.STACK_NAME,
         )
         self.assertEqual(
             state_dir.path,
@@ -39,18 +38,13 @@ class TestSplitPure(unittest.TestCase):
         """Testing `StateDir.from_state_file`."""
         state_file = pulumi_state_splitter.state_file.StateFile(
             backend_dir=pathlib.Path("var/tmp"),
-            project_name="test-project",
-            stack_name="test-stack",
+            stack_name=data.STACK_NAME,
             state=_TRIVIAL_MODEL,
         )
         state_dir = pulumi_state_splitter.split.StateDir.from_state_file(state_file)
         self.assertEqual(
             state_dir.backend_dir,
             state_file.backend_dir,
-        )
-        self.assertEqual(
-            state_dir.project_name,
-            state_file.project_name,
         )
         self.assertEqual(
             state_dir.stack_name,
@@ -65,18 +59,13 @@ class TestSplitPure(unittest.TestCase):
         """Testing `StateDir.to_state_file`."""
         state_dir = pulumi_state_splitter.split.StateDir(
             backend_dir=pathlib.Path("var/tmp"),
-            project_name="test-project",
-            stack_name="test-stack",
+            stack_name=data.STACK_NAME,
             state=_TRIVIAL_MODEL,
         )
         state_file = pulumi_state_splitter.split.StateDir.to_state_file(state_dir)
         self.assertEqual(
             state_file.backend_dir,
             state_dir.backend_dir,
-        )
-        self.assertEqual(
-            state_file.project_name,
-            state_dir.project_name,
         )
         self.assertEqual(
             state_file.stack_name,
@@ -165,28 +154,19 @@ class TestStateFileFilesystem(util.TmpDirTest):
         }
     )
 
-    def test_load_all(self):
-        """Testing `StateDir.load_all`."""
-        data.multi_stack_split.save(self._tmp_dir)
-        state_files = pulumi_state_splitter.split.StateDir.load_all(self._tmp_dir)
-        self.assertEqual(
-            util.sorted_stored_states(state_files),
-            util.sorted_stored_states(
-                [
-                    pulumi_state_splitter.split.StateDir(
-                        backend_dir=self._tmp_dir, **kwargs
-                    )
-                    for kwargs in data.MULTI_STACK_MODELS
-                ]
-            ),
+    def test_find(self):
+        """Testing `StateDir.find`."""
+        data.multi_stack_split().save(self._tmp_dir)
+        self.assertCountEqual(
+            pulumi_state_splitter.split.StateDir.find(self._tmp_dir),
+            data.MULTI_STACK_NAMES,
         )
 
     def test_load_trivial(self):
         """Testing `StateDir.load` with a trivial stack."""
         state_dir = pulumi_state_splitter.split.StateDir(
             backend_dir=self._tmp_dir,
-            project_name="test-project",
-            stack_name="test-stack",
+            stack_name=data.STACK_NAME,
         )
 
         self._TRIVIAL_DIRECTORY.save(self._tmp_dir)
@@ -202,8 +182,7 @@ class TestStateFileFilesystem(util.TmpDirTest):
         """Testing `StateDir.load` with a more complex stack."""
         state_dir = pulumi_state_splitter.split.StateDir(
             backend_dir=self._tmp_dir,
-            project_name="test-project",
-            stack_name="test-stack",
+            stack_name=data.STACK_NAME,
         )
 
         self._DIRECTORY.save(self._tmp_dir)
@@ -224,8 +203,7 @@ class TestStateFileFilesystem(util.TmpDirTest):
         """Testing `StateDir.remove`."""
         state_dir = pulumi_state_splitter.split.StateDir(
             backend_dir=self._tmp_dir,
-            project_name="test-project",
-            stack_name="test-stack",
+            stack_name=data.STACK_NAME,
         )
 
         self._DIRECTORY.save(self._tmp_dir)
@@ -238,8 +216,7 @@ class TestStateFileFilesystem(util.TmpDirTest):
         """Testing that `StateDir.remove` does not remove other files."""
         state_dir = pulumi_state_splitter.split.StateDir(
             backend_dir=self._tmp_dir,
-            project_name="test-project",
-            stack_name="test-stack",
+            stack_name=data.STACK_NAME,
         )
 
         directory = util.Directory(
@@ -264,8 +241,7 @@ class TestStateFileFilesystem(util.TmpDirTest):
         """Testing `StateDir.save` with a trivial stack."""
         state_dir = pulumi_state_splitter.split.StateDir(
             backend_dir=self._tmp_dir,
-            project_name="test-project",
-            stack_name="test-stack",
+            stack_name=data.STACK_NAME,
             state=_TRIVIAL_MODEL,
         )
 
@@ -278,8 +254,7 @@ class TestStateFileFilesystem(util.TmpDirTest):
         """Testing `StateDir.save` with a more complex stack."""
         state_dir = pulumi_state_splitter.split.StateDir(
             backend_dir=self._tmp_dir,
-            project_name="test-project",
-            stack_name="test-stack",
+            stack_name=data.STACK_NAME,
             state=data.stack_model(),
         )
 
@@ -288,3 +263,49 @@ class TestStateFileFilesystem(util.TmpDirTest):
         got = util.Directory.load(self._tmp_dir)
 
         self._DIRECTORY.compare(got, self)
+
+    def test_split_state_file(self):
+        """Testing `StateDir.split_state_file`."""
+        input_ = data.multi_stack_unsplit()
+        input_.save(self._tmp_dir)
+        state_file = pulumi_state_splitter.state_file.StateFile(
+            backend_dir=self._tmp_dir,
+            stack_name=data.MULTI_STACK_NAMES[0],
+        )
+        state_file.load()
+        pulumi_state_splitter.split.StateDir.split_state_file(state_file)
+        got = util.Directory.load(self._tmp_dir)
+        want = input_
+
+        # only one of the stacks should be processed
+        want[".pulumi"]["stacks"]["test-project-1"].pop("test-stack-1.json")
+        want["test-project-1"] = {
+            "test-stack-1": data.multi_stack_split()["test-project-1"]["test-stack-1"]
+        }
+        want.compare(got, self)
+
+    def test_unsplit_state(self):
+        """Testing `StateDir.unsplit`."""
+        input_ = data.multi_stack_split()
+        input_.save(self._tmp_dir)
+        state_dir = pulumi_state_splitter.split.StateDir(
+            backend_dir=self._tmp_dir,
+            stack_name=data.MULTI_STACK_NAMES[0],
+        )
+        state_dir.load()
+        state_dir.unsplit()
+        got = util.Directory.load(self._tmp_dir)
+        want = data.multi_stack_unsplit()
+        want = input_
+        # only one of the stacks should be processed
+        want["test-project-1"].pop("test-stack-1")
+        want[".pulumi"] = {
+            "stacks": {
+                "test-project-1": {
+                    "test-stack-1.json": data.multi_stack_unsplit()[".pulumi"][
+                        "stacks"
+                    ]["test-project-1"]["test-stack-1.json"]
+                }
+            }
+        }
+        want.compare(got, self)

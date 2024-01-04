@@ -41,29 +41,20 @@ class StateFile(pulumi_state_splitter.stored_state.StoredState):
     def path(self) -> pathlib.Path:
         """Path of the state file."""
         return (
-            self.backend_dir
-            / ".pulumi"
-            / "stacks"
-            / self.project_name
-            / self.stack_name
+            self.backend_dir / ".pulumi" / "stacks" / str(self.stack_name)
         ).with_suffix(".json")
 
     @classmethod
-    def load_all(cls, backend_dir: pathlib.Path) -> Iterable["StateFile"]:
+    def find(
+        cls, backend_dir: pathlib.Path
+    ) -> Iterable[pulumi_state_splitter.stored_state.StackName]:
         """Finds all file states in the Pulumi backend directory."""
-        glob_state = cls(
-            backend_dir="",
-            project_name="*",
-            stack_name="*",
-        ).path
-        for stack_path in backend_dir.glob(str(glob_state)):
-            state_file = cls(
-                backend_dir=backend_dir,
-                project_name=stack_path.parent.name,
-                stack_name=stack_path.with_suffix("").name,
+        glob_states = cls._glob_all().path
+        for stack_path in backend_dir.glob(str(glob_states)):
+            yield pulumi_state_splitter.stored_state.StackName(
+                project=stack_path.parent.name,
+                stack=stack_path.with_suffix("").name,
             )
-            state_file.load()
-            yield state_file
 
     def remove(self):
         self.path.unlink()

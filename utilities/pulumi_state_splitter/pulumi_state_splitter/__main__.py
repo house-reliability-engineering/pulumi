@@ -2,4 +2,4 @@
 
 import pulumi_state_splitter
 
-pulumi_state_splitter.main()
+pulumi_state_splitter.cli()

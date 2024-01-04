@@ -1,0 +1,4 @@
+[TYPECHECK]
+signature-mutators=click.decorators.option,
+                   click.decorators.argument,
+                   click.decorators.pass_context

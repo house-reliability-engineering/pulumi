@@ -18,7 +18,7 @@ class StateDir(pulumi_state_splitter.stored_state.StoredState):
     @property
     def path(self) -> pathlib.Path:
         """Path of the state directory."""
-        return self.backend_dir / self.project_name / self.stack_name
+        return self.backend_dir / str(self.stack_name)
 
     @property
     def _state_path(self):
@@ -46,22 +46,17 @@ class StateDir(pulumi_state_splitter.stored_state.StoredState):
             pulumi_state_splitter.fs.rmdir_if_empty(d)
 
     @classmethod
-    def load_all(cls, backend_dir: pathlib.Path) -> Iterable["StateDir"]:
+    def find(
+        cls, backend_dir: pathlib.Path
+    ) -> Iterable[pulumi_state_splitter.stored_state.StackName]:
         """Finds all directory states in the Pulumi backend directory."""
-        glob_state = cls(
-            backend_dir="",
-            project_name="*",
-            stack_name="*",
-        )._state_path
-        for state_path in backend_dir.glob(str(glob_state)):
+        glob_states = cls._glob_all()._state_path
+        for state_path in backend_dir.glob(str(glob_states)):
             stack_dir = state_path.parent
-            state_dir = cls(
-                backend_dir=backend_dir,
-                project_name=stack_dir.parent.name,
-                stack_name=stack_dir.name,
+            yield pulumi_state_splitter.stored_state.StackName(
+                project=stack_dir.parent.name,
+                stack=stack_dir.name,
             )
-            state_dir.load()
-            yield state_dir
 
     def load(self):
         """Loads the contents of the state directory."""
@@ -130,3 +125,16 @@ class StateDir(pulumi_state_splitter.stored_state.StoredState):
                     ),
                     f,
                 )
+
+    @classmethod
+    def split_state_file(cls, state_file: pulumi_state_splitter.state_file.StateFile):
+        """Splits a Pulumi stack state file into multiple files."""
+        split_state = cls.from_state_file(state_file)
+        split_state.save()
+        state_file.remove()
+
+    def unsplit(self):
+        """Merges a split Pulumi stack state into single state file."""
+        state_file = self.to_state_file()
+        state_file.save()
+        self.remove()

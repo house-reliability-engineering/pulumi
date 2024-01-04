@@ -75,12 +75,11 @@ class TestStateFilePure(unittest.TestCase):
         """Testing the `StateFile.path` property."""
         state_file = pulumi_state_splitter.state_file.StateFile(
             backend_dir=pathlib.Path("var/tmp"),
-            project_name="test_project",
-            stack_name="test_stack",
+            stack_name=data.STACK_NAME,
         )
         self.assertEqual(
             state_file.path,
-            pathlib.Path("var/tmp/.pulumi/stacks/test_project/test_stack.json"),
+            pathlib.Path("var/tmp/.pulumi/stacks/test-project/test-stack.json"),
         )
 
 
@@ -91,8 +90,8 @@ class TestStateFileFilesystem(util.TmpDirTest):
         {
             ".pulumi": {
                 "stacks": {
-                    "test_project": {
-                        "test_stack.json": json.dumps(
+                    "test-project": {
+                        "test-stack.json": json.dumps(
                             data.stack_state(),
                             indent=4,
                         )
@@ -102,28 +101,19 @@ class TestStateFileFilesystem(util.TmpDirTest):
         }
     )
 
-    def test_load_all(self):
-        """Testing StateFile.load_all."""
-        data.multi_stack_unsplit.save(self._tmp_dir)
-        state_files = pulumi_state_splitter.state_file.StateFile.load_all(self._tmp_dir)
-        self.assertEqual(
-            util.sorted_stored_states(state_files),
-            util.sorted_stored_states(
-                [
-                    pulumi_state_splitter.state_file.StateFile(
-                        backend_dir=self._tmp_dir, **kwargs
-                    )
-                    for kwargs in data.MULTI_STACK_MODELS
-                ]
-            ),
+    def test_find(self):
+        """Testing `StateFile.find`."""
+        data.multi_stack_unsplit().save(self._tmp_dir)
+        self.assertCountEqual(
+            pulumi_state_splitter.state_file.StateFile.find(self._tmp_dir),
+            data.MULTI_STACK_NAMES,
         )
 
     def test_load(self):
         """Testing StateFile.load."""
         state_file = pulumi_state_splitter.state_file.StateFile(
             backend_dir=self._tmp_dir,
-            project_name="test_project",
-            stack_name="test_stack",
+            stack_name=data.STACK_NAME,
         )
 
         self._DIRECTORY.save(self._tmp_dir)
@@ -144,8 +134,7 @@ class TestStateFileFilesystem(util.TmpDirTest):
         """Testing StateFile.remove."""
         state_file = pulumi_state_splitter.state_file.StateFile(
             backend_dir=self._tmp_dir,
-            project_name="test_project",
-            stack_name="test_stack",
+            stack_name=data.STACK_NAME,
         )
 
         state_file.path.parent.mkdir(parents=True)
@@ -158,8 +147,7 @@ class TestStateFileFilesystem(util.TmpDirTest):
         """Testing StateFile.save."""
         state_file = pulumi_state_splitter.state_file.StateFile(
             backend_dir=self._tmp_dir,
-            project_name="test_project",
-            stack_name="test_stack",
+            stack_name=data.STACK_NAME,
             state=data.stack_model(),
         )
 

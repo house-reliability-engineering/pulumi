@@ -3,6 +3,7 @@
 import os
 import unittest
 import unittest.mock
+from typing import Sequence
 
 import pulumi
 import pulumi_command
@@ -12,7 +13,8 @@ import yaml
 from . import util
 
 with typeguard.install_import_hook("pulumi_state_splitter"):
-    import pulumi_state_splitter.backend
+    import pulumi_state_splitter.state_file
+    import pulumi_state_splitter.stored_state
 
 
 @unittest.mock.patch.dict(os.environ, PULUMI_CONFIG_PASSPHRASE="very secret")
@@ -29,6 +31,13 @@ class TestPulumiIntegration(util.TmpDirTest):
                 name=self._PROJECT_NAME,
                 runtime="python",
             ),
+        )
+
+    def _cli_run(self, *args: Sequence[str]):
+        super()._cli_run(
+            "--backend-directory",
+            self._tmp_dir,
+            *args,
         )
 
     def _create_stack(self, name, program):
@@ -50,8 +59,10 @@ class TestPulumiIntegration(util.TmpDirTest):
         stack = self._create_stack("test-stack", lambda: None)
         state_file = pulumi_state_splitter.state_file.StateFile(
             backend_dir=self._tmp_dir,
-            project_name=self._PROJECT_NAME,
-            stack_name=stack.name,
+            stack_name=pulumi_state_splitter.stored_state.StackName(
+                project=self._PROJECT_NAME,
+                stack=stack.name,
+            ),
         )
         state_file.load()
         self.assertEqual(
@@ -133,8 +144,14 @@ class TestPulumiIntegration(util.TmpDirTest):
             + 2 * Counts.deep
         )
 
-        pulumi_state_splitter.backend.split(self._tmp_dir)
-        pulumi_state_splitter.backend.unsplit(self._tmp_dir)
+        def split():
+            self._cli_run("split", f"{self._PROJECT_NAME}/test-stack")
+
+        def unsplit():
+            self._cli_run("unsplit", f"{self._PROJECT_NAME}/test-stack")
+
+        split()
+        unsplit()
 
         summary = stack.up().summary
         self.assertEqual(summary.result, "succeeded")
@@ -143,9 +160,9 @@ class TestPulumiIntegration(util.TmpDirTest):
             {"create": resource_count},
         )
 
-        pulumi_state_splitter.backend.split(self._tmp_dir)
+        split()
         self._check_outputs(stack.name, {"test-output": test_string})
-        pulumi_state_splitter.backend.unsplit(self._tmp_dir)
+        unsplit()
 
         summary = stack.up().summary
         self.assertEqual(summary.result, "succeeded")
@@ -154,8 +171,8 @@ class TestPulumiIntegration(util.TmpDirTest):
             {"same": resource_count},
         )
 
-        pulumi_state_splitter.backend.split(self._tmp_dir)
-        pulumi_state_splitter.backend.unsplit(self._tmp_dir)
+        split()
+        unsplit()
 
         test_string = "test string 2"
         summary = stack.up().summary
@@ -169,9 +186,9 @@ class TestPulumiIntegration(util.TmpDirTest):
             },
         )
 
-        pulumi_state_splitter.backend.split(self._tmp_dir)
+        split()
         self._check_outputs(stack.name, {"test-output": test_string})
-        pulumi_state_splitter.backend.unsplit(self._tmp_dir)
+        unsplit()
 
         summary = stack.destroy().summary
         self.assertEqual(summary.result, "succeeded")
@@ -199,9 +216,15 @@ class TestPulumiIntegration(util.TmpDirTest):
             {"create": 1},
         )
 
-        pulumi_state_splitter.backend.split(self._tmp_dir)
+        def split():
+            self._cli_run("split", "--all")
+
+        def unsplit():
+            self._cli_run("unsplit", "--all")
+
+        split()
         self._check_outputs(stack_with_output.name, {"test-output": test_string})
-        pulumi_state_splitter.backend.unsplit(self._tmp_dir)
+        unsplit()
 
         def pulumi_program_with_reference():
             reference = pulumi.StackReference(
@@ -223,9 +246,9 @@ class TestPulumiIntegration(util.TmpDirTest):
             {"create": 1},
         )
 
-        pulumi_state_splitter.backend.split(self._tmp_dir)
+        split()
         self._check_outputs(stack_with_reference.name, {"test-ref-output": test_string})
-        pulumi_state_splitter.backend.unsplit(self._tmp_dir)
+        unsplit()
 
         test_string = "test string 2"
         summary = stack_with_output.up().summary
@@ -237,9 +260,9 @@ class TestPulumiIntegration(util.TmpDirTest):
             },
         )
 
-        pulumi_state_splitter.backend.split(self._tmp_dir)
+        split()
         self._check_outputs(stack_with_output.name, {"test-output": test_string})
-        pulumi_state_splitter.backend.unsplit(self._tmp_dir)
+        unsplit()
 
         summary = stack_with_reference.up().summary
         self.assertEqual(summary.result, "succeeded")
@@ -251,5 +274,5 @@ class TestPulumiIntegration(util.TmpDirTest):
             },
         )
 
-        pulumi_state_splitter.backend.split(self._tmp_dir)
+        split()
         self._check_outputs(stack_with_reference.name, {"test-ref-output": test_string})

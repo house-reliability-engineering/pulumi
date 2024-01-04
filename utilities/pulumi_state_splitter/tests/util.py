@@ -8,10 +8,13 @@ import tempfile
 import unittest
 from typing import Iterable, Mapping, Sequence
 
+import click.testing
 import typeguard
 import yaml
 
 with typeguard.install_import_hook("pulumi_state_splitter"):
+    import pulumi_state_splitter
+    import pulumi_state_splitter.model
     import pulumi_state_splitter.stored_state
 
 DATA_DIR = pathlib.Path(__file__).parent / "data"
@@ -32,7 +35,7 @@ def sorted_stored_states(
     """Orders sorted states for comparison of sequences."""
 
     def _key(stored_state):
-        return stored_state.project_name, stored_state.stack_name
+        return str(stored_state.stack_name)
 
     return sorted(stored_states, key=_key)
 
@@ -94,3 +97,12 @@ class TmpDirTest(unittest.TestCase):
                 es.enter_context(tempfile.TemporaryDirectory())
             )
             self.addCleanup(es.pop_all().close)
+
+    def _cli_run(self, *args: Sequence[str]):
+        runner = click.testing.CliRunner()
+        result = runner.invoke(
+            pulumi_state_splitter.cli,
+            args,
+            catch_exceptions=False,
+        )
+        self.assertEqual(result.exit_code, 0, result.output)
