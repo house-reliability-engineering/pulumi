@@ -3,7 +3,6 @@
 import os
 import unittest
 import unittest.mock
-from typing import Sequence
 
 import pulumi
 import pulumi_command
@@ -31,13 +30,6 @@ class TestPulumiIntegration(util.TmpDirTest):
                 name=self._PROJECT_NAME,
                 runtime="python",
             ),
-        )
-
-    def _cli_run(self, *args: Sequence[str]):
-        super()._cli_run(
-            "--backend-directory",
-            self._tmp_dir,
-            *args,
         )
 
     def _create_stack(self, name, program):
@@ -133,7 +125,21 @@ class TestPulumiIntegration(util.TmpDirTest):
 
             pulumi.export("test-output", ref.stdout)
 
-        stack = self._create_stack("test-stack", pulumi_program)
+        with pulumi_state_splitter.split.Unsplitter(
+            backend_dir=self._tmp_dir,
+            all_stacks=True,
+        ):
+            stack = self._create_stack("test-stack", pulumi_program)
+
+        unsplitter = pulumi_state_splitter.split.Unsplitter(
+            backend_dir=self._tmp_dir,
+            stacks_names=[
+                pulumi_state_splitter.stored_state.StackName(
+                    project=self._PROJECT_NAME,
+                    stack=stack.name,
+                )
+            ],
+        )
 
         resource_count = (
             1  # the provider
@@ -144,38 +150,29 @@ class TestPulumiIntegration(util.TmpDirTest):
             + 2 * Counts.deep
         )
 
-        def split():
-            self._cli_run("split", "--stack", f"{self._PROJECT_NAME}/test-stack")
+        with unsplitter:
+            summary = stack.up().summary
 
-        def unsplit():
-            self._cli_run("unsplit", "--stack", f"{self._PROJECT_NAME}/test-stack")
-
-        split()
-        unsplit()
-
-        summary = stack.up().summary
         self.assertEqual(summary.result, "succeeded")
         self.assertEqual(
             summary.resource_changes,
             {"create": resource_count},
         )
 
-        split()
         self._check_outputs(stack.name, {"test-output": test_string})
-        unsplit()
 
-        summary = stack.up().summary
+        with unsplitter:
+            summary = stack.up().summary
+
         self.assertEqual(summary.result, "succeeded")
         self.assertEqual(
             summary.resource_changes,
             {"same": resource_count},
         )
 
-        split()
-        unsplit()
-
         test_string = "test string 2"
-        summary = stack.up().summary
+        with unsplitter:
+            summary = stack.up().summary
         self.assertEqual(summary.result, "succeeded")
         changed_count = Counts.intermediate + Counts.ref + Counts.deep
         self.assertEqual(
@@ -186,11 +183,10 @@ class TestPulumiIntegration(util.TmpDirTest):
             },
         )
 
-        split()
         self._check_outputs(stack.name, {"test-output": test_string})
-        unsplit()
 
-        summary = stack.destroy().summary
+        with unsplitter:
+            summary = stack.destroy().summary
         self.assertEqual(summary.result, "succeeded")
         self.assertEqual(
             summary.resource_changes,
@@ -209,22 +205,20 @@ class TestPulumiIntegration(util.TmpDirTest):
             "with-output", pulumi_program_with_output
         )
 
-        summary = stack_with_output.up().summary
+        unsplitter = pulumi_state_splitter.split.Unsplitter(
+            backend_dir=self._tmp_dir,
+            all_stacks=True,
+        )
+
+        with unsplitter:
+            summary = stack_with_output.up().summary
         self.assertEqual(summary.result, "succeeded")
         self.assertEqual(
             summary.resource_changes,
             {"create": 1},
         )
 
-        def split():
-            self._cli_run("split", "--all-stacks")
-
-        def unsplit():
-            self._cli_run("unsplit", "--all-stacks")
-
-        split()
         self._check_outputs(stack_with_output.name, {"test-output": test_string})
-        unsplit()
 
         def pulumi_program_with_reference():
             reference = pulumi.StackReference(
@@ -235,23 +229,25 @@ class TestPulumiIntegration(util.TmpDirTest):
                 reference.get_output("test-output"),
             )
 
-        stack_with_reference = self._create_stack(
-            "with-reference", pulumi_program_with_reference
-        )
+        with unsplitter:
+            stack_with_reference = self._create_stack(
+                "with-reference", pulumi_program_with_reference
+            )
 
-        summary = stack_with_reference.up().summary
+        with unsplitter:
+            summary = stack_with_reference.up().summary
+
         self.assertEqual(summary.result, "succeeded")
         self.assertEqual(
             summary.resource_changes,
             {"create": 1},
         )
 
-        split()
         self._check_outputs(stack_with_reference.name, {"test-ref-output": test_string})
-        unsplit()
 
         test_string = "test string 2"
-        summary = stack_with_output.up().summary
+        with unsplitter:
+            summary = stack_with_output.up().summary
         self.assertEqual(summary.result, "succeeded")
         self.assertEqual(
             summary.resource_changes,
@@ -260,11 +256,10 @@ class TestPulumiIntegration(util.TmpDirTest):
             },
         )
 
-        split()
         self._check_outputs(stack_with_output.name, {"test-output": test_string})
-        unsplit()
 
-        summary = stack_with_reference.up().summary
+        with unsplitter:
+            summary = stack_with_reference.up().summary
         self.assertEqual(summary.result, "succeeded")
         self.assertEqual(
             summary.resource_changes,
@@ -274,5 +269,4 @@ class TestPulumiIntegration(util.TmpDirTest):
             },
         )
 
-        split()
         self._check_outputs(stack_with_reference.name, {"test-ref-output": test_string})

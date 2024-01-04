@@ -2,14 +2,29 @@
 
 import contextlib
 import itertools
+from typing import Sequence
 
+import click.testing
 import parameterized
+import typeguard
+
+with typeguard.install_import_hook("pulumi_state_splitter"):
+    import pulumi_state_splitter
 
 from . import data, util
 
 
 class TestCli(util.TmpDirTest):
     """Testing `pulumi_state_splitter.cli`."""
+
+    def _cli_run(self, *args: Sequence[str]):
+        runner = click.testing.CliRunner()
+        result = runner.invoke(
+            pulumi_state_splitter.cli,
+            args,
+            catch_exceptions=False,
+        )
+        self.assertEqual(result.exit_code, 0, result.output)
 
     @parameterized.parameterized.expand(
         itertools.product(

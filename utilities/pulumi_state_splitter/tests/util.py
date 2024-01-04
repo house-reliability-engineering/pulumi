@@ -8,12 +8,10 @@ import tempfile
 import unittest
 from typing import Iterable, Mapping, Sequence
 
-import click.testing
 import typeguard
 import yaml
 
 with typeguard.install_import_hook("pulumi_state_splitter"):
-    import pulumi_state_splitter
     import pulumi_state_splitter.model
     import pulumi_state_splitter.stored_state
 
@@ -55,10 +53,10 @@ class Directory(dict):
 
     def save(self, root: pathlib.Path):
         """Writes a filesystem directory from a Directory."""
+        root.mkdir(exist_ok=True)
         for name, contents in self.items():
             path = root / name
             if isinstance(contents, dict):
-                path.mkdir()
                 Directory(contents).save(path)
             else:
                 path.write_text(contents)
@@ -97,12 +95,3 @@ class TmpDirTest(unittest.TestCase):
                 es.enter_context(tempfile.TemporaryDirectory())
             )
             self.addCleanup(es.pop_all().close)
-
-    def _cli_run(self, *args: Sequence[str]):
-        runner = click.testing.CliRunner()
-        result = runner.invoke(
-            pulumi_state_splitter.cli,
-            args,
-            catch_exceptions=False,
-        )
-        self.assertEqual(result.exit_code, 0, result.output)

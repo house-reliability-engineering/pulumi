@@ -2,8 +2,9 @@
 
 import os
 import pathlib
-from typing import Iterable
+from typing import Iterable, Optional, Sequence
 
+import pydantic
 import yaml
 
 import pulumi_state_splitter.fs
@@ -138,3 +139,39 @@ class StateDir(pulumi_state_splitter.stored_state.StoredState):
         state_file = self.to_state_file()
         state_file.save()
         self.remove()
+
+
+class Unsplitter(pydantic.BaseModel):
+    """A context manager unsplitting and splitting the states."""
+
+    all_stacks: bool = False
+    backend_dir: pathlib.Path
+    stacks_names: Optional[
+        Sequence[pulumi_state_splitter.stored_state.StackName]
+    ] = pydantic.Field(default_factory=list)
+
+    def __enter__(self):
+        stacks_names = self.stacks_names
+        if self.all_stacks:
+            stacks_names = StateDir.find(self.backend_dir)
+        for stack_name in stacks_names:
+            state_dir = pulumi_state_splitter.split.StateDir(
+                backend_dir=self.backend_dir,
+                stack_name=stack_name,
+            )
+            state_dir.load()
+            state_dir.unsplit()
+
+    def __exit__(self, type_, value, traceback):
+        stacks_names = self.stacks_names
+        if self.all_stacks:
+            stacks_names = pulumi_state_splitter.state_file.StateFile.find(
+                self.backend_dir
+            )
+        for stack_name in stacks_names:
+            state_file = pulumi_state_splitter.state_file.StateFile(
+                backend_dir=self.backend_dir,
+                stack_name=stack_name,
+            )
+            state_file.load()
+            StateDir.split_state_file(state_file)

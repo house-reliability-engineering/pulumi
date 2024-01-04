@@ -20,8 +20,8 @@ _TRIVIAL_MODEL = pulumi_state_splitter.model.State(
 )
 
 
-class TestSplitPure(unittest.TestCase):
-    """Testing `pulumi_state_splitter.split` without filesystem interactions."""
+class TestStateDirPure(unittest.TestCase):
+    """Testing `StateDir` without filesystem interactions."""
 
     def test_path(self):
         """Testing `StateDir.path`."""
@@ -113,8 +113,8 @@ class TestSplitPure(unittest.TestCase):
         self.assertEqual(got, want)
 
 
-class TestStateFileFilesystem(util.TmpDirTest):
-    """Testing pulumi_state_splitter.split with filesystem interactions"""
+class TestStateDirFilesystem(util.TmpDirTest):
+    """Testing `StateDir` with filesystem interactions"""
 
     _TRIVIAL_DIRECTORY = util.Directory(
         {
@@ -309,3 +309,57 @@ class TestStateFileFilesystem(util.TmpDirTest):
             }
         }
         want.compare(got, self)
+
+
+class TestUnsplitter(util.TmpDirTest):
+    """Testing `Unsplitter`."""
+
+    def test_unsplitter_some_stacks(self):
+        """Testing `Unsplitter` with specified stacks."""
+        input_ = data.multi_stack_split()
+        input_.save(self._tmp_dir)
+
+        with pulumi_state_splitter.split.Unsplitter(
+            all_stacks=False,
+            backend_dir=self._tmp_dir,
+            stacks_names=data.MULTI_STACK_NAMES[:2],
+        ):
+            got = util.Directory.load(self._tmp_dir)
+            want = data.multi_stack_unsplit()
+            want[".pulumi"]["stacks"].pop("test-project-2")
+            want["test-project-2"] = input_["test-project-2"]
+            want.compare(got, self)
+
+        got = util.Directory.load(self._tmp_dir)
+        input_.compare(got, self)
+
+    def test_unsplitter_all_stacks(self):
+        """Testing `Unsplitter` with specified stacks."""
+        input_ = data.multi_stack_split()
+        input_.save(self._tmp_dir)
+
+        with pulumi_state_splitter.split.Unsplitter(
+            all_stacks=True,
+            backend_dir=self._tmp_dir,
+        ):
+            got = util.Directory.load(self._tmp_dir)
+            want = data.multi_stack_unsplit()
+            want.compare(got, self)
+
+        got = util.Directory.load(self._tmp_dir)
+        input_.compare(got, self)
+
+    def test_unsplitter_new(self):
+        """Testing `Unsplitter` with with a new stack added."""
+        input_ = data.multi_stack_split()
+        input_["test-project-1"].pop("test-stack-2")
+        input_.save(self._tmp_dir)
+
+        with pulumi_state_splitter.split.Unsplitter(
+            all_stacks=True,
+            backend_dir=self._tmp_dir,
+        ):
+            data.multi_stack_unsplit().save(self._tmp_dir)
+
+        got = util.Directory.load(self._tmp_dir)
+        data.multi_stack_split().compare(got, self)
