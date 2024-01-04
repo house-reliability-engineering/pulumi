@@ -9,6 +9,7 @@ import unittest
 import black
 import click
 import isort.main
+
 # this is to avoid:
 #   RuntimeError: dictionary changed size during iteration
 # in asteroid from pylint
