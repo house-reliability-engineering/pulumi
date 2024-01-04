@@ -3,16 +3,24 @@
 set -o errexit
 set -o nounset
 
+PYTHON=python3.11
+
+$PYTHON -m pip \
+  install \
+  --quiet \
+  poetry
+
 cd "$(dirname $0)"
 
 mkdir -p bin
 
-poetry install \
+$PYTHON -m poetry \
+  install \
   --quiet \
   --with test
 
 PULUMI_PYTHON_VERSION="$(
-  poetry show pulumi |
+  $PYTHON -m poetry show pulumi |
   awk '$1 == "version" { print "v" $3}'
 )"
 
@@ -39,11 +47,15 @@ PATH="$PWD/bin:$PATH"
 
 set +o errexit
 
-poetry run \
+$PYTHON -m poetry \
+  run \
   coverage run \
     --source=pulumi_state_splitter \
     --omit=__main__.py \
     --module unittest
 
-poetry run \
-    coverage report --show-missing
+$PYTHON -m poetry \
+  run \
+  coverage \
+  report \
+  --show-missing

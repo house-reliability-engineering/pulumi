@@ -1,0 +1,15 @@
+on:
+  push:
+    paths: utilities/pulumi_state_splitter/**
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    name: pulumi_state_splitter tests
+    steps:
+      - uses: actions/checkout@master
+      - run: >
+          sudo apt update &&
+          sudo apt install python3.11
+      - run: ./utilities/pulumi_state_splitter/run-tests.sh
+
