@@ -4,7 +4,7 @@ import functools
 import pathlib
 import subprocess
 import sys
-from typing import List, Sequence
+from typing import Sequence
 
 import click
 
@@ -30,11 +30,13 @@ def cli(ctx: click.Context, backend_directory: str):
     ctx.obj = backend_directory
 
 
-# pylint: disable=unused-argument
-def _from_paths(
-    ctx: click.Context, param: str, values: Sequence[str]
-) -> List[pulumi_state_splitter.stored_state.StackName]:
-    return [pulumi_state_splitter.stored_state.StackName.from_path(v) for v in values]
+class StackNameOptionType(click.types.StringParamType):
+    """click option type for Pulumi fully qualified stack names."""
+
+    name = "project-name/stack-name"
+
+    def convert(self, value, param, ctx):
+        return pulumi_state_splitter.stored_state.StackName.from_path(value)
 
 
 def _command(f):
@@ -48,8 +50,8 @@ def _command(f):
     @click.option(
         "-s",
         "--stack",
-        callback=_from_paths,
         multiple=True,
+        type=StackNameOptionType(),
     )
     @click.pass_obj
     @functools.wraps(f)
@@ -72,7 +74,7 @@ def _command(f):
 def split(
     backend_dir: pathlib.Path,
     all_stacks: bool,
-    stacks_names: Sequence[pulumi_state_splitter.stored_state.StackName],
+    stacks_names: Sequence["pulumi_state_splitter.stored_state.StackName"],
 ):
     """Splits single Pulumi stack state files into multiple files each."""
     if all_stacks:
