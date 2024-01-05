@@ -144,7 +144,6 @@ class StateDir(pulumi_state_splitter.stored_state.StoredState):
 class Unsplitter(pydantic.BaseModel):
     """A context manager unsplitting and splitting the states."""
 
-    all_stacks: bool = False
     backend_dir: pathlib.Path
     stacks_names: Optional[
         Sequence[pulumi_state_splitter.stored_state.StackName]
@@ -152,7 +151,7 @@ class Unsplitter(pydantic.BaseModel):
 
     def __enter__(self):
         stacks_names = self.stacks_names
-        if self.all_stacks:
+        if stacks_names is None:
             stacks_names = StateDir.find(self.backend_dir)
         for stack_name in stacks_names:
             state_dir = pulumi_state_splitter.split.StateDir(
@@ -164,7 +163,7 @@ class Unsplitter(pydantic.BaseModel):
 
     def __exit__(self, type_, value, traceback):
         stacks_names = self.stacks_names
-        if self.all_stacks:
+        if stacks_names is None:
             stacks_names = pulumi_state_splitter.state_file.StateFile.find(
                 self.backend_dir
             )

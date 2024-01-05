@@ -127,7 +127,7 @@ class TestPulumiIntegration(util.TmpDirTest):
 
         with pulumi_state_splitter.split.Unsplitter(
             backend_dir=self._tmp_dir,
-            all_stacks=True,
+            stacks_names=None,
         ):
             stack = self._create_stack("test-stack", pulumi_program)
 
@@ -207,7 +207,7 @@ class TestPulumiIntegration(util.TmpDirTest):
 
         unsplitter = pulumi_state_splitter.split.Unsplitter(
             backend_dir=self._tmp_dir,
-            all_stacks=True,
+            stacks_names=None,
         )
 
         with unsplitter:

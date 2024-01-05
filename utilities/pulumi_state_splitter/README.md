@@ -41,8 +41,8 @@ Usage: pulumi_state_splitter run [OPTIONS] [COMMAND]...
   Runs a command with the stack states unsplit.
 
 Options:
-  -a, --all-stacks
   -s, --stack PROJECT-NAME/STACK-NAME
+                                  process only these stacks
   --help                          Show this message and exit.
 utilities/pulumi_state_splitter$
 ```
@@ -54,8 +54,8 @@ Usage: pulumi_state_splitter split [OPTIONS]
   Splits single Pulumi stack state files into multiple files each.
 
 Options:
-  -a, --all-stacks
   -s, --stack PROJECT-NAME/STACK-NAME
+                                  process only these stacks
   --help                          Show this message and exit.
 utilities/pulumi_state_splitter$
 ```
@@ -67,8 +67,8 @@ Usage: pulumi_state_splitter unsplit [OPTIONS]
   Merges split Pulumi stack states into single state file each.
 
 Options:
-  -a, --all-stacks
   -s, --stack PROJECT-NAME/STACK-NAME
+                                  process only these stacks
   --help                          Show this message and exit.
 utilities/pulumi_state_splitter$
 ```

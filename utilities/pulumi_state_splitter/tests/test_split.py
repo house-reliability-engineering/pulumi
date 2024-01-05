@@ -320,7 +320,6 @@ class TestUnsplitter(util.TmpDirTest):
         input_.save(self._tmp_dir)
 
         with pulumi_state_splitter.split.Unsplitter(
-            all_stacks=False,
             backend_dir=self._tmp_dir,
             stacks_names=data.MULTI_STACK_NAMES[:2],
         ):
@@ -334,17 +333,32 @@ class TestUnsplitter(util.TmpDirTest):
         input_.compare(got, self)
 
     def test_unsplitter_all_stacks(self):
-        """Testing `Unsplitter` with specified stacks."""
+        """Testing `Unsplitter` with all stacks."""
         input_ = data.multi_stack_split()
         input_.save(self._tmp_dir)
 
         with pulumi_state_splitter.split.Unsplitter(
-            all_stacks=True,
             backend_dir=self._tmp_dir,
+            stacks_names=None,
         ):
             got = util.Directory.load(self._tmp_dir)
             want = data.multi_stack_unsplit()
             want.compare(got, self)
+
+        got = util.Directory.load(self._tmp_dir)
+        input_.compare(got, self)
+
+    def test_unsplitter_no_stacks(self):
+        """Testing `Unsplitter` with no stacks."""
+        input_ = data.multi_stack_split()
+        input_.save(self._tmp_dir)
+
+        with pulumi_state_splitter.split.Unsplitter(
+            backend_dir=self._tmp_dir,
+            stacks_names=[],
+        ):
+            got = util.Directory.load(self._tmp_dir)
+            input_.compare(got, self)
 
         got = util.Directory.load(self._tmp_dir)
         input_.compare(got, self)
@@ -356,8 +370,8 @@ class TestUnsplitter(util.TmpDirTest):
         input_.save(self._tmp_dir)
 
         with pulumi_state_splitter.split.Unsplitter(
-            all_stacks=True,
             backend_dir=self._tmp_dir,
+            stacks_names=None,
         ):
             data.multi_stack_unsplit().save(self._tmp_dir)
 

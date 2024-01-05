@@ -34,10 +34,6 @@ class TestCli(util.TmpDirTest):
                 "unsplit",
             ],
             [
-                True,
-                False,
-            ],
-            [
                 [
                     "test-project-1/test-stack-1",
                     "test-project-1/test-stack-2",
@@ -46,7 +42,7 @@ class TestCli(util.TmpDirTest):
             ],
         )
     )
-    def test_split_unsplit(self, set_backend_dir, command, all_stacks, stacks):
+    def test_split_unsplit(self, set_backend_dir, command, stacks):
         """Testing `pulumi_state_splitter.cli`, split and unsplit commands."""
 
         input_, want = (
@@ -66,14 +62,6 @@ class TestCli(util.TmpDirTest):
         args.append(command)
         for stack in stacks:
             args.extend(["--stack", stack])
-        if all_stacks:
-            args.append("--all-stacks")
-
-        if all_stacks == bool(stacks):
-            with self.assertRaises(ValueError):
-                self._cli_run(args)
-            return
-
         if stacks:
             # if stacks is specified, then test-project-2 is not being processed
             if command == "split":
@@ -103,7 +91,6 @@ class TestCli(util.TmpDirTest):
             self._cli_run(
                 [
                     "run",
-                    "--all-stacks",
                     "--",
                     "cp",
                     "-r",
@@ -120,7 +107,6 @@ class TestCli(util.TmpDirTest):
             self._cli_run(
                 [
                     "run",
-                    "--all-stacks",
                     "--",
                     "false",
                 ],

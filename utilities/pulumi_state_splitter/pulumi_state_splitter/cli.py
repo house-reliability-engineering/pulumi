@@ -4,7 +4,7 @@ import functools
 import pathlib
 import subprocess
 import sys
-from typing import Sequence
+from typing import Optional, Sequence
 
 import click
 
@@ -44,42 +44,31 @@ class StackNameOptionType(click.types.StringParamType):
 def _command(f):
     @cli.command()
     @click.option(
-        "-a",
-        "--all-stacks",
-        default=False,
-        is_flag=True,
-    )
-    @click.option(
         "-s",
         "--stack",
+        help="process only these stacks",
         multiple=True,
         type=StackNameOptionType(),
     )
     @click.pass_obj
     @functools.wraps(f)
-    def check_arguments(backend_dir, all_stacks, stack, **kwargs):
-        if all_stacks and stack:
-            raise ValueError("--all-stacks is mutually exclusive with --stack")
-        if not (all_stacks or stack):
-            raise ValueError("either --all-stacks or --stack expected")
+    def maybe_all_stacks(backend_dir, stack, **kwargs):
         f(
             backend_dir=backend_dir,
-            all_stacks=all_stacks,
-            stacks_names=stack,
+            stacks_names=stack or None,
             **kwargs,
         )
 
-    return check_arguments
+    return maybe_all_stacks
 
 
 @_command
 def split(
     backend_dir: pathlib.Path,
-    all_stacks: bool,
-    stacks_names: Sequence["pulumi_state_splitter.stored_state.StackName"],
+    stacks_names: Optional[Sequence["pulumi_state_splitter.stored_state.StackName"]],
 ):
     """Splits single Pulumi stack state files into multiple files each."""
-    if all_stacks:
+    if stacks_names is None:
         stacks_names = pulumi_state_splitter.state_file.StateFile.find(backend_dir)
     for stack_name in stacks_names:
         state_file = pulumi_state_splitter.state_file.StateFile(
@@ -93,11 +82,10 @@ def split(
 @_command
 def unsplit(
     backend_dir: pathlib.Path,
-    all_stacks: bool,
-    stacks_names: Sequence[pulumi_state_splitter.stored_state.StackName],
+    stacks_names: Optional[Sequence[pulumi_state_splitter.stored_state.StackName]],
 ):
     """Merges split Pulumi stack states into single state file each."""
-    if all_stacks:
+    if stacks_names is None:
         stacks_names = pulumi_state_splitter.split.StateDir.find(backend_dir)
     for stack_name in stacks_names:
         state_dir = pulumi_state_splitter.split.StateDir(
@@ -112,13 +100,11 @@ def unsplit(
 @_command
 def run(
     backend_dir: pathlib.Path,
-    all_stacks: bool,
-    stacks_names: Sequence[pulumi_state_splitter.stored_state.StackName],
+    stacks_names: Optional[Sequence[pulumi_state_splitter.stored_state.StackName]],
     command: str,
 ):
     """Runs a command with the stack states unsplit."""
     with pulumi_state_splitter.split.Unsplitter(
-        all_stacks=all_stacks,
         backend_dir=backend_dir,
         stacks_names=stacks_names,
     ):
