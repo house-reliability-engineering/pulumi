@@ -40,6 +40,8 @@ class TestStyle(unittest.TestCase):
                     # otherwise it fights with black over
                     # an empty line in imports of this file
                     "--ignore-whitespace",
+                    "--line-length",
+                    str(black.DEFAULT_LINE_LENGTH),
                     *self._package_paths,
                 ]
             )
