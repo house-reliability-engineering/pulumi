@@ -63,5 +63,23 @@ $PYTHON -m poetry \
   coverage \
   report \
   --fail-under=100 \
-  --show-missing &&
+  --show-missing
+
+
+export TEST_BACKEND_DIRECTORY="$(mktemp -d)"
+cp -r tests/data/multi_stack_split/* "$TEST_BACKEND_DIRECTORY"
+
+# Basic smoke test for the CLI
+$PYTHON -m poetry \
+  run -- \
+  pulumi_state_splitter \
+  --backend-directory "$TEST_BACKEND_DIRECTORY" \
+  run -- \
+    diff \
+      --new-file \
+      --recursive \
+      --unified \
+      tests/data/multi_stack_unsplit \
+      "$TEST_BACKEND_DIRECTORY"
+
 exit "$TESTS_EXIT_CODE"
