@@ -1,6 +1,6 @@
 """Model representing a Pulumi stack state."""
 
-from typing import Any, ClassVar, Iterable, List, Mapping, Optional, Sequence
+from typing import Any, ClassVar, Iterable, List, Literal, Mapping, Optional, Sequence
 
 import pydantic
 
@@ -99,4 +99,4 @@ class State(pydantic.BaseModel):
     }
 
     checkpoint: Checkpoint
-    version: int
+    version: Literal[3]

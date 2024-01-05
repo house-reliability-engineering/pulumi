@@ -47,3 +47,11 @@ class TestModel(unittest.TestCase):
         self.assertIn("dependencies", dump_4)
         self.assertNotIn("outputs", dump_4)
         self.assertIn("parent", dump_4)
+
+    def test_bad_version(self):
+        """Testing checking if we are handling the supported version."""
+        with self.assertRaises(ValueError):
+            pulumi_state_splitter.model.State(
+                checkpoint={},
+                version=17,
+            )
