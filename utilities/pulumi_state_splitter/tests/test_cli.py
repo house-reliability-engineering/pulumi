@@ -100,6 +100,8 @@ class TestCli(util.TmpDirTest):
             )
         want = input_
         want["test-project-2"]["test-stack-4"] = want["test-project-2"]["test-stack-3"]
+        got = util.Directory.load(self._tmp_dir)
+        want.compare(got, self)
 
     def test_split_run_error(self):
         """Testing `pulumi_state_splitter.cli`, failing run command"""
