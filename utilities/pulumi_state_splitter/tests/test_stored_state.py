@@ -31,11 +31,20 @@ class TestStackName(unittest.TestCase):
         self.assertEqual(name.project, "foo")
         self.assertEqual(name.stack, "bar")
 
-    def test_from_path_bad(self):
+    def test_from_path_bad_organization(self):
         """Testing `pulumi_state_splitter.stored_state.StackName.from_path`
 
         with an invalid organization name.
         """
         path = "acme/foo/bar"
+        with self.assertRaises(ValueError):
+            pulumi_state_splitter.stored_state.StackName.from_path(path)
+
+    def test_from_path_bad_components(self):
+        """Testing `pulumi_state_splitter.stored_state.StackName.from_path`
+
+        with an invalid organization name.
+        """
+        path = "foo"
         with self.assertRaises(ValueError):
             pulumi_state_splitter.stored_state.StackName.from_path(path)
