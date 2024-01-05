@@ -99,7 +99,7 @@ class TestStateDirPure(unittest.TestCase):
             parent_resource=parent,
         )
         grandchild = pulumi_state_splitter.model.Resource(
-            type="baz",
+            type="baz:acme",
             urn="grandchild",
             parent=child.urn,
             parent_resource=child,
@@ -109,7 +109,7 @@ class TestStateDirPure(unittest.TestCase):
         self.assertEqual(got, want)
 
         got = pulumi_state_splitter.split.StateDir.resource_subpath(grandchild)
-        want = pathlib.Path("foo/parent/bar/child/baz/grandchild.yaml")
+        want = pathlib.Path("foo/parent/bar/child/baz-acme/grandchild.yaml")
         self.assertEqual(got, want)
 
 
