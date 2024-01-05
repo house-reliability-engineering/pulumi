@@ -1,8 +1,20 @@
 """Model representing a Pulumi stack state."""
 
-from typing import Any, ClassVar, Iterable, List, Mapping, Optional
+from typing import Any, ClassVar, Iterable, List, Mapping, Optional, Sequence
 
 import pydantic
+
+
+# workaround for https://github.com/pydantic/pydantic/discussions/5461
+def _skip_some_falsy_values(
+    model: pydantic.BaseModel, handler: str, attributes: Sequence[str]
+):
+    """Omits serialization of some attributes with falsy values."""
+    return {
+        name: value
+        for name, value in handler(model).items()
+        if value or name not in attributes
+    }
 
 
 class Resource(pydantic.BaseModel):
@@ -36,20 +48,18 @@ class Resource(pydantic.BaseModel):
         """Pulumi name of the resource."""
         return self.urn.rsplit("::", 1)[-1]
 
-    # workaround for https://github.com/pydantic/pydantic/discussions/5461
     @pydantic.model_serializer(mode="wrap")
     def _serialize(self, handler):
-        """Omits serialization of some attributes with falsy values."""
-        data = handler(self)
-        for attribute in [
-            "dependencies",
-            "outputs",
-            "parent",
-            "provider",
-        ]:
-            if not data[attribute]:
-                data.pop(attribute)
-        return data
+        return _skip_some_falsy_values(
+            self,
+            handler,
+            [
+                "dependencies",
+                "outputs",
+                "parent",
+                "provider",
+            ],
+        )
 
 
 class Latest(pydantic.BaseModel):
@@ -63,14 +73,13 @@ class Latest(pydantic.BaseModel):
 class Checkpoint(pydantic.BaseModel):
     """Represents the Pulumi stack state checkpoint."""
 
-    # workaround for https://github.com/pydantic/pydantic/discussions/5461
     @pydantic.model_serializer(mode="wrap")
     def _serialize(self, handler):
-        """Omits serialization of latest if None."""
-        data = handler(self)
-        if not data["latest"]:
-            data.pop("latest")
-        return data
+        return _skip_some_falsy_values(
+            self,
+            handler,
+            ["latest"],
+        )
 
     stack: str
     latest: Optional[Latest] = None
