@@ -17,5 +17,6 @@ jobs:
         with:
             path: ~/.cache/pypoetry
             key: ${{ hashFiles('utilities/pulumi_state_splitter/poetry.lock') }}
-      - run: ./utilities/pulumi_state_splitter/run-tests.sh
+      - name: Run tests
+        run: ./utilities/pulumi_state_splitter/run-tests.sh
 
