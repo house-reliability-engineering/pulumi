@@ -12,8 +12,10 @@ jobs:
       - uses: actions/checkout@master
       - uses: actions/setup-python@v5
         with:
-          cache: poetry
-          cache-dependency-path: utilities/pulumi_state_splitter/poetry.lock
           python-version: '3.11'
+      - uses: actions/cache@v3
+        with:
+            path: ~/.cache/pypoetry
+            key: ${{ hashFiles('utilities/pulumi_state_splitter/poetry.lock') }}
       - run: ./utilities/pulumi_state_splitter/run-tests.sh
 
