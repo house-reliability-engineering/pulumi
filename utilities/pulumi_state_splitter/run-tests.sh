@@ -54,9 +54,14 @@ $PYTHON -m poetry \
     --omit=__main__.py \
     --module unittest
 
+TESTS_EXIT_CODE="$?"
+
+set -o errexit
+
 $PYTHON -m poetry \
   run \
   coverage \
   report \
   --fail-under=100 \
-  --show-missing
+  --show-missing &&
+exit "$TESTS_EXIT_CODE"
