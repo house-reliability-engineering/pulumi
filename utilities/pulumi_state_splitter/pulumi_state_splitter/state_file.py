@@ -11,17 +11,29 @@ import pulumi_state_splitter.stored_state
 def sorted_resources(
     resources: Iterable[pulumi_state_splitter.model.Resource],
 ) -> List[pulumi_state_splitter.model.Resource]:
-    """Sorts resources to Pulumi's liking."""
+    """Sorts resources to Pulumi's liking.
+
+    Pulumi expects that resources in the resources list do not refer
+    to resources later in the list, otherwise it complains, for example:
+
+      ```
+      error: snapshot integrity failure; refusing to use it:
+       resource <urn-1> refers to unknown provider <urn-2>`
+      ```
+    """
     # sort by URN first
     urn2resource = dict(sorted((resource.urn, resource) for resource in resources))
 
     output = {}
 
     def dependencies_first(resource: pulumi_state_splitter.model.Resource):
+        # https://github.com/pulumi/pulumi/blob/91bcce1/pkg/resource/deploy/snapshot.go#L194
         dependencies = resource.dependencies.copy()
+        # https://github.com/pulumi/pulumi/blob/91bcce1/pkg/resource/deploy/snapshot.go#L156
         if resource.provider:
             provider_urn = resource.provider.rsplit("::", 1)[0]
             dependencies.append(provider_urn)
+        # https://github.com/pulumi/pulumi/blob/91bcce1/pkg/resource/deploy/snapshot.go#L166
         if resource.parent:
             dependencies.append(resource.parent)
         dependencies.sort()
