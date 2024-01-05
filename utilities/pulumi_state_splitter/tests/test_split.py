@@ -138,14 +138,14 @@ class TestStateDirFilesystem(util.TmpDirTest):
         {
             "test-project": {
                 "test-stack": {
-                    "pulumi:providers:command": {
+                    "pulumi-providers-command": {
                         "default_0_9_2.yaml": yaml.dump(_RESOURCES[0]),
                     },
-                    "command:local:Command": {
+                    "command-local-Command": {
                         "true.yaml": yaml.dump(_RESOURCES[2]),
                     },
                     "outputs.yaml": yaml.dump({"test-output": "test string"}),
-                    "pulumi:pulumi:Stack": {
+                    "pulumi-pulumi-Stack": {
                         "test-project-test-stack.yaml": yaml.dump(_RESOURCES[1]),
                     },
                     "state.yaml": yaml.dump(_STACK_STATE),
