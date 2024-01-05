@@ -364,7 +364,7 @@ class TestUnsplitter(util.TmpDirTest):
         input_.compare(got, self)
 
     def test_unsplitter_new(self):
-        """Testing `Unsplitter` with with a new stack added."""
+        """Testing `Unsplitter` with a new stack added."""
         input_ = data.multi_stack_split()
         input_["test-project-1"].pop("test-stack-2")
         input_.save(self._tmp_dir)
