@@ -8,6 +8,8 @@ from typing import Sequence
 
 import click
 
+import pulumi_state_splitter
+import pulumi_state_splitter.split
 import pulumi_state_splitter.stored_state
 
 
