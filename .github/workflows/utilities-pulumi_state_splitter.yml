@@ -1,6 +1,8 @@
 on:
   push:
-    paths: utilities/pulumi_state_splitter/**
+    paths:
+      - .github/workflows/utilities-pulumi_state_splitter.yml
+      - utilities/pulumi_state_splitter/**
 
 jobs:
   tests:
