@@ -264,6 +264,37 @@ class TestStateDirFilesystem(util.TmpDirTest):
 
         self._DIRECTORY.compare(got, self)
 
+    def test_save_no_outputs(self):
+        """Testing `StateDir.save` with no stack outputs."""
+        state = pulumi_state_splitter.model.State(
+            checkpoint=pulumi_state_splitter.model.Checkpoint(
+                latest=pulumi_state_splitter.model.Latest(
+                    resources=[
+                        pulumi_state_splitter.model.Resource(
+                            type="pulumi:pulumi:Stack",
+                            urn=(
+                                "urn:pulumi:test-stack::test-project"
+                                "::pulumi:pulumi:Stack::test-project-test-stack"
+                            ),
+                        ),
+                    ],
+                ),
+                stack=f"organization/{data.STACK_NAME}",
+            ),
+            version=3,
+        )
+        state_dir = pulumi_state_splitter.split.StateDir(
+            backend_dir=self._tmp_dir,
+            stack_name=data.STACK_NAME,
+            state=state,
+        )
+
+        state_dir.save()
+        self.assertEqual(
+            (self._tmp_dir / str(data.STACK_NAME) / "outputs.yaml").read_text().strip(),
+            "{}",
+        )
+
     def test_split_state_file(self):
         """Testing `StateDir.split_state_file`."""
         input_ = data.multi_stack_unsplit()

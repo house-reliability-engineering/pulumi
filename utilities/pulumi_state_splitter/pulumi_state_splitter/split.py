@@ -116,7 +116,7 @@ class StateDir(pulumi_state_splitter.stored_state.StoredState):
             if resource.type == "pulumi:pulumi:Stack":
                 resource = resource.model_copy()
                 with (self.path / "outputs.yaml").open("w") as f:
-                    yaml.dump(resource.outputs, f)
+                    yaml.dump(resource.outputs or {}, f)
                     resource.outputs = {}
             path = self.path / self.resource_subpath(resource)
             path.parent.mkdir(parents=True, exist_ok=True)
