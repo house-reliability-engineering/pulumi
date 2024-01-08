@@ -32,6 +32,9 @@ def resources():
                 urn="resource_2",
                 dependencies=[
                     "resource_3",
+                    "resource_7",
+                    "resource_6",
+                    "resource_5",
                     "resource_1",
                 ],
             ),
@@ -54,6 +57,18 @@ def resources():
                 type="provider",
                 id=provider_id,
                 urn=provider_urn,
+            ),
+            pulumi_state_splitter.model.Resource(
+                type="foo",
+                urn="resource_5",
+            ),
+            pulumi_state_splitter.model.Resource(
+                type="foo",
+                urn="resource_7",
+            ),
+            pulumi_state_splitter.model.Resource(
+                type="foo",
+                urn="resource_6",
             ),
         ]
     )
