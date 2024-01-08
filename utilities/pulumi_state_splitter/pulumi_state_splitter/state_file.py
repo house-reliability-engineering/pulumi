@@ -27,6 +27,8 @@ def sorted_resources(
     output = {}
 
     def dependencies_first(resource: pulumi_state_splitter.model.Resource):
+        resource = resource.model_copy()
+        resource.dependencies = sorted(resource.dependencies)
         # https://github.com/pulumi/pulumi/blob/91bcce1/pkg/resource/deploy/snapshot.go#L194
         dependencies = resource.dependencies.copy()
         # https://github.com/pulumi/pulumi/blob/91bcce1/pkg/resource/deploy/snapshot.go#L156
@@ -36,7 +38,6 @@ def sorted_resources(
         # https://github.com/pulumi/pulumi/blob/91bcce1/pkg/resource/deploy/snapshot.go#L166
         if resource.parent:
             dependencies.append(resource.parent)
-        dependencies.sort()
         for dependency in dependencies:
             dependencies_first(urn2resource[dependency])
         output.setdefault(resource.urn, resource)
