@@ -1,0 +1,24 @@
+name: pulumi_state_splitter
+
+on:
+  push:
+    paths:
+      - .github/workflows/utilities-pulumi_state_splitter.yml
+      - utilities/pulumi_state_splitter/**
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    name: tests
+    steps:
+      - uses: actions/checkout@master
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/cache@v3
+        with:
+          path: ~/.cache/pypoetry
+          key: ${{ hashFiles('utilities/pulumi_state_splitter/poetry.lock') }}
+      - name: Run tests
+        run: ./utilities/pulumi_state_splitter/run-tests.sh
+

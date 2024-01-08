@@ -1,0 +1,33 @@
+[tool.poetry]
+name = "pulumi_state_splitter"
+version = "0.1.0"
+description = "Manipulates a Pulumi state file to make it more VCS friendly"
+authors = ["Filip Zyzniewski <filip.zyzniewski@gmail.com>"]
+license = "Apache License 2.0"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+pydantic = "^2.5.3"
+# not 3.12 because https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=1058032
+python = "^3.11"
+pyyaml = "^6.0.1"
+click = "^8.1.7"
+
+[tool.poetry.group.test.dependencies]
+pylint = "^3.0.3"
+dill = "^0.3.7"
+black = "^23.12.0"
+isort = "^5.13.2"
+pycodestyle = "^2.11.1"
+coverage = "^7.3.4"
+pulumi = "^3.99.0"
+pulumi-command = "^0.9.2"
+typeguard = "^4.1.5"
+parameterized = "^0.9.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.scripts]
+pulumi_state_splitter = "pulumi_state_splitter:cli"
