@@ -113,8 +113,9 @@ class StateDir(pulumi_state_splitter.stored_state.StoredState):
         if not self.state.checkpoint.latest:
             return
         for resource in self.state.checkpoint.latest.resources:
+            resource = resource.model_copy()
+            resource.dependencies = sorted(resource.dependencies)
             if resource.type == "pulumi:pulumi:Stack":
-                resource = resource.model_copy()
                 with (self.path / "outputs.yaml").open("w") as f:
                     yaml.dump(resource.outputs or {}, f)
                     resource.outputs = {}
