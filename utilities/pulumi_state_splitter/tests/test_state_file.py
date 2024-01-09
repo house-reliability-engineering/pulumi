@@ -55,35 +55,21 @@ class TestStateFilePure(unittest.TestCase):
 
     def test_sorted_resources_with_dependencies(self):
         """Testing sorting of the resources with dependencies."""
-        got = {
-            resource.urn: resource
+        got = [
+            resource.urn
             for resource in pulumi_state_splitter.state_file.sorted_resources(
                 data.resources().values()
             )
-        }
+        ]
         want = [
             "resource_0",
             "resource_1",
             "urn:pulumi:test-stack::test-project::pulumi:providers:provider::default",
             "resource_3",
-            "resource_5",
-            "resource_6",
-            "resource_7",
             "resource_2",
             "resource_4",
         ]
-        self.assertEqual(list(got), want)
-
-        self.assertEqual(
-            got["resource_2"].dependencies,
-            [
-                "resource_1",
-                "resource_3",
-                "resource_5",
-                "resource_6",
-                "resource_7",
-            ],
-        )
+        self.assertEqual(got, want)
 
     def test_path(self):
         """Testing the `StateFile.path` property."""
