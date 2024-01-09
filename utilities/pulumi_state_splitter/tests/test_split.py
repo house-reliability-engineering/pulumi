@@ -134,6 +134,7 @@ class TestStateDirFilesystem(util.TmpDirTest):
     _STACK_STATE = data.stack_state()
     _RESOURCES = _STACK_STATE["checkpoint"]["latest"].pop("resources")
     _RESOURCES[1].pop("outputs")
+    _RESOURCES[4]["dependencies"].sort()
     _DIRECTORY = util.Directory(
         {
             "test-project": {
@@ -142,7 +143,9 @@ class TestStateDirFilesystem(util.TmpDirTest):
                         "default_0_9_2.yaml": yaml.dump(_RESOURCES[0]),
                     },
                     "command-local-Command": {
-                        "true.yaml": yaml.dump(_RESOURCES[2]),
+                        "cat1.yaml": yaml.dump(_RESOURCES[2]),
+                        "cat2.yaml": yaml.dump(_RESOURCES[4]),
+                        "true.yaml": yaml.dump(_RESOURCES[3]),
                     },
                     "outputs.yaml": yaml.dump({"test-output": "test string"}),
                     "pulumi-pulumi-Stack": {
@@ -193,6 +196,8 @@ class TestStateDirFilesystem(util.TmpDirTest):
 
         for state in state_dir.state, want:
             state.checkpoint.latest.resources.sort(key=util.resource_key)
+            for resource in state.checkpoint.latest.resources:
+                resource.dependencies.sort()
 
         self.assertEqual(
             state_dir.state,

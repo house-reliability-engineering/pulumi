@@ -138,7 +138,30 @@ def stack_state():
                         "urn": stack_urn
                         + "::pulumi:pulumi:Stack::test-project-test-stack",
                     },
-                    {
+                    cat1 := {
+                        "created": "1970-01-01T00:12:41.0Z",
+                        "custom": True,
+                        "modified": "1970-01-01T00:12:42.0Z",
+                        "id": "cat1-deadbeef0",
+                        "inputs": {
+                            "create": "cat",
+                            "stdin": "",
+                        },
+                        "outputs": {
+                            "create": "cat",
+                            "stderr": "",
+                            "stdout": "",
+                        },
+                        "parent": stack_urn
+                        + "::pulumi:pulumi:Stack::test-project-test-stack",
+                        "propertyDependencies": {"create": None},
+                        "provider": provider_urn
+                        + "::7160bd4d-b7cb-4fdd-acd5-3a173fd01793",
+                        "sourcePosition": "project:///.../foo.py#3",
+                        "type": "command:local:Command",
+                        "urn": f"{stack_urn}::command:local:Command::cat1",
+                    },
+                    true := {
                         "created": "1970-01-01T00:12:39.0Z",
                         "custom": True,
                         "modified": "1970-01-01T00:12:40.0Z",
@@ -156,6 +179,39 @@ def stack_state():
                         "provider": f"{provider_urn}::{provider_id}",
                         "sourcePosition": "project:///.../foo.py#2",
                         "type": "command:local:Command",
+                    },
+                    {
+                        "created": "1970-01-01T00:12:43.0Z",
+                        "custom": True,
+                        "dependencies": [
+                            true["urn"],
+                            cat1["urn"],
+                        ],
+                        "modified": "1970-01-01T00:12:44.0Z",
+                        "id": "cat2-deabdeef2",
+                        "inputs": {
+                            "create": "cat",
+                            "stdin": "",
+                        },
+                        "outputs": {
+                            "create": "cat",
+                            "stderr": "",
+                            "stdout": "",
+                        },
+                        "parent": stack_urn
+                        + "::pulumi:pulumi:Stack::test-project-test-stack",
+                        "propertyDependencies": {
+                            "create": None,
+                            "stdin": [
+                                true["urn"],
+                                cat1["urn"],
+                            ],
+                        },
+                        "provider": provider_urn
+                        + "::7160bd4d-b7cb-4fdd-acd5-3a173fd01793",
+                        "sourcePosition": "project:///.../foo.py#4",
+                        "type": "command:local:Command",
+                        "urn": f"{stack_urn}::command:local:Command::cat2",
                     },
                 ],
                 "secrets_providers": {
@@ -204,7 +260,7 @@ def stack_model():
                         urn=stack_urn
                         + "::pulumi:pulumi:Stack::test-project-test-stack",
                     ),
-                    pulumi_state_splitter.model.Resource(
+                    true := pulumi_state_splitter.model.Resource(
                         created="1970-01-01T00:12:39.0Z",
                         custom=True,
                         modified="1970-01-01T00:12:40.0Z",
@@ -224,6 +280,64 @@ def stack_model():
                         sourcePosition="project:///.../foo.py#2",
                         type="command:local:Command",
                         urn=f"{stack_urn}::command:local:Command::true",
+                    ),
+                    cat1 := pulumi_state_splitter.model.Resource(
+                        created="1970-01-01T00:12:41.0Z",
+                        custom=True,
+                        modified="1970-01-01T00:12:42.0Z",
+                        id="cat1-deadbeef0",
+                        inputs={
+                            "create": "cat",
+                            "stdin": "",
+                        },
+                        outputs={
+                            "create": "cat",
+                            "stderr": "",
+                            "stdout": "",
+                        },
+                        parent=stack_urn
+                        + "::pulumi:pulumi:Stack::test-project-test-stack",
+                        parent_resource=parent,
+                        propertyDependencies={"create": None},
+                        provider=provider_urn
+                        + "::7160bd4d-b7cb-4fdd-acd5-3a173fd01793",
+                        sourcePosition="project:///.../foo.py#3",
+                        type="command:local:Command",
+                        urn=f"{stack_urn}::command:local:Command::cat1",
+                    ),
+                    pulumi_state_splitter.model.Resource(
+                        created="1970-01-01T00:12:43.0Z",
+                        custom=True,
+                        dependencies=[
+                            true.urn,
+                            cat1.urn,
+                        ],
+                        modified="1970-01-01T00:12:44.0Z",
+                        id="cat2-deabdeef2",
+                        inputs={
+                            "create": "cat",
+                            "stdin": "",
+                        },
+                        outputs={
+                            "create": "cat",
+                            "stderr": "",
+                            "stdout": "",
+                        },
+                        parent=stack_urn
+                        + "::pulumi:pulumi:Stack::test-project-test-stack",
+                        parent_resource=parent,
+                        propertyDependencies={
+                            "create": None,
+                            "stdin": [
+                                true.urn,
+                                cat1.urn,
+                            ],
+                        },
+                        provider=provider_urn
+                        + "::7160bd4d-b7cb-4fdd-acd5-3a173fd01793",
+                        sourcePosition="project:///.../foo.py#4",
+                        type="command:local:Command",
+                        urn=f"{stack_urn}::command:local:Command::cat2",
                     ),
                 ],
                 secrets_providers={
