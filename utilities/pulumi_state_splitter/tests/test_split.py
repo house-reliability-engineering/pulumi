@@ -20,6 +20,11 @@ _TRIVIAL_MODEL = pulumi_state_splitter.model.State(
 )
 
 
+def _maybe_delattr(obj, name):
+    if hasattr(obj, name):
+        delattr(obj, name)
+
+
 class TestStateDirPure(unittest.TestCase):
     """Testing `StateDir` without filesystem interactions."""
 
@@ -133,6 +138,8 @@ class TestStateDirFilesystem(util.TmpDirTest):
 
     _STACK_STATE = data.stack_state()
     _RESOURCES = _STACK_STATE["checkpoint"]["latest"].pop("resources")
+    for r in _RESOURCES:
+        r.pop("sourcePosition", None)
     _RESOURCES[1].pop("outputs")
     _RESOURCES[4]["dependencies"].sort()
     _DIRECTORY = util.Directory(
@@ -197,6 +204,7 @@ class TestStateDirFilesystem(util.TmpDirTest):
         for state in state_dir.state, want:
             state.checkpoint.latest.resources.sort(key=util.resource_key)
             for resource in state.checkpoint.latest.resources:
+                _maybe_delattr(resource, "sourcePosition")
                 resource.dependencies.sort()
 
         self.assertEqual(

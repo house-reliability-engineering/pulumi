@@ -22,7 +22,10 @@ class Resource(pydantic.BaseModel):
 
     model_config = pydantic.ConfigDict(extra="allow")
 
-    file_exclude: ClassVar = {"parent_resource"}
+    file_exclude: ClassVar = {
+        "parent_resource",
+        "sourcePosition",
+    }
 
     dependencies: Optional[List[str]] = pydantic.Field(default_factory=list)
     outputs: Optional[Mapping[str, Any]] = None
