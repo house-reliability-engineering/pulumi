@@ -24,6 +24,9 @@ class Resource(pydantic.BaseModel):
 
     file_exclude: ClassVar = {
         "parent_resource",
+        # This is a position in the SDK, not the Pulumi program and
+        # can change in a different environment (e.g. CI vs local),
+        # causing huge state diffs, so ignoring.
         "sourcePosition",
     }
 
