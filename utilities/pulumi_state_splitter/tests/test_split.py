@@ -20,7 +20,7 @@ _TRIVIAL_MODEL = pulumi_state_splitter.model.State(
 )
 
 
-def _maybe_delattr(obj, name):
+def _delattr_if_exists(obj, name):
     if hasattr(obj, name):
         delattr(obj, name)
 
@@ -204,7 +204,7 @@ class TestStateDirFilesystem(util.TmpDirTest):
         for state in state_dir.state, want:
             state.checkpoint.latest.resources.sort(key=util.resource_key)
             for resource in state.checkpoint.latest.resources:
-                _maybe_delattr(resource, "sourcePosition")
+                _delattr_if_exists(resource, "sourcePosition")
                 resource.dependencies.sort()
 
         self.assertEqual(
