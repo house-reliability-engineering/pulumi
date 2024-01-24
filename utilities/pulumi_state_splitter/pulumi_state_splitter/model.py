@@ -22,7 +22,13 @@ class Resource(pydantic.BaseModel):
 
     model_config = pydantic.ConfigDict(extra="allow")
 
-    file_exclude: ClassVar = {"parent_resource"}
+    file_exclude: ClassVar = {
+        "parent_resource",
+        # This is a position in the SDK, not the Pulumi program and
+        # can change in a different environment (e.g. CI vs local),
+        # causing huge state diffs, so ignoring.
+        "sourcePosition",
+    }
 
     dependencies: Optional[List[str]] = pydantic.Field(default_factory=list)
     outputs: Optional[Mapping[str, Any]] = None

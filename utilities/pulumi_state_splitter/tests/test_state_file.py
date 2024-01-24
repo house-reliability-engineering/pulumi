@@ -86,21 +86,6 @@ class TestStateFilePure(unittest.TestCase):
 class TestStateFileFilesystem(util.TmpDirTest):
     """Testing pulumi_state_splitter.state_file with filesystem interactions"""
 
-    _DIRECTORY = util.Directory(
-        {
-            ".pulumi": {
-                "stacks": {
-                    "test-project": {
-                        "test-stack.json": json.dumps(
-                            data.stack_state(),
-                            indent=4,
-                        )
-                    }
-                }
-            }
-        }
-    )
-
     def test_find(self):
         """Testing `StateFile.find`."""
         data.multi_stack_unsplit().save(self._tmp_dir)
@@ -116,7 +101,21 @@ class TestStateFileFilesystem(util.TmpDirTest):
             stack_name=data.STACK_NAME,
         )
 
-        self._DIRECTORY.save(self._tmp_dir)
+        directory = util.Directory(
+            {
+                ".pulumi": {
+                    "stacks": {
+                        "test-project": {
+                            "test-stack.json": json.dumps(
+                                data.stack_state(),
+                                indent=4,
+                            )
+                        }
+                    }
+                }
+            }
+        )
+        directory.save(self._tmp_dir)
 
         state_file.load()
 
@@ -153,5 +152,22 @@ class TestStateFileFilesystem(util.TmpDirTest):
 
         state_file.save()
 
-        directory = util.Directory.load(self._tmp_dir)
-        self._DIRECTORY.compare(directory, self)
+        got = util.Directory.load(self._tmp_dir)
+        stack = data.stack_state()
+        for r in stack["checkpoint"]["latest"]["resources"]:
+            r.pop("sourcePosition", None)
+        want = util.Directory(
+            {
+                ".pulumi": {
+                    "stacks": {
+                        "test-project": {
+                            "test-stack.json": json.dumps(
+                                stack,
+                                indent=4,
+                            )
+                        }
+                    }
+                }
+            }
+        )
+        want.compare(got, self)
