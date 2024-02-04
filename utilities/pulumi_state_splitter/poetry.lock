@@ -677,6 +677,28 @@ files = [
 ]
 
 [[package]]
+name = "style-tests"
+version = "0.1.0"
+description = "TestCase checking the code quality"
+optional = false
+python-versions = "^3.11"
+files = []
+develop = false
+
+[package.dependencies]
+black = "^24.1.1"
+isort = "^5.13.2"
+pycodestyle = "^2.11.1"
+pylint = "^3.0.3"
+
+[package.source]
+type = "git"
+url = "https://github.com/house-reliability-engineering/python.git"
+reference = "HEAD"
+resolved_reference = "02de0328a201bfe3d8c1324fedaef50339a8cac8"
+subdirectory = "style_tests"
+
+[[package]]
 name = "tomlkit"
 version = "0.12.3"
 description = "Style preserving TOML library"
@@ -719,4 +741,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "3ed1878253ee933d6023297d79f32ef04b6511c51f0039647e75541ef547deeb"
+content-hash = "095066da530c5d2bd35fb97b53c549a8b03e10eec2572440903f7a5169f78b7a"

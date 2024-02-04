@@ -12,6 +12,7 @@ pydantic = "^2.5.3"
 python = "^3.11"
 pyyaml = "^6.0.1"
 click = "^8.1.7"
+style-tests = {git = "https://github.com/house-reliability-engineering/python.git", subdirectory = "style_tests"}
 
 [tool.poetry.group.test.dependencies]
 pylint = "^3.0.3"
