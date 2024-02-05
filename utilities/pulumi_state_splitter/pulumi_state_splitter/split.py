@@ -147,9 +147,9 @@ class Unsplitter(pydantic.BaseModel):
     """A context manager unsplitting and splitting the states."""
 
     backend_dir: pathlib.Path
-    stacks_names: Optional[
-        Sequence[pulumi_state_splitter.stored_state.StackName]
-    ] = pydantic.Field(default_factory=list)
+    stacks_names: Optional[Sequence[pulumi_state_splitter.stored_state.StackName]] = (
+        pydantic.Field(default_factory=list)
+    )
 
     def __enter__(self):
         stacks_names = self.stacks_names
