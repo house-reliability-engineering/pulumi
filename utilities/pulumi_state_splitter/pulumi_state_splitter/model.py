@@ -46,7 +46,7 @@ class Resource(pydantic.BaseModel):
             urn2resource[resource.urn] = resource.model_copy()
         for resource in urn2resource.values():
             if resource.parent:
-                resource.parent_resource = urn2resource[resource.parent]
+                resource.parent_resource = urn2resource.get(resource.parent)
         return list(urn2resource.values())
 
     @property

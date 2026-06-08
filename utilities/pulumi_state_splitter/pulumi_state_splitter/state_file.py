@@ -38,7 +38,8 @@ def sorted_resources(
             dependencies.append(resource.parent)
         dependencies.sort()
         for dependency in dependencies:
-            dependencies_first(urn2resource[dependency])
+            if dependency in urn2resource:
+                dependencies_first(urn2resource[dependency])
         output.setdefault(resource.urn, resource)
 
     for resource in urn2resource.values():
