@@ -96,7 +96,9 @@ class StateDir(pulumi_state_splitter.stored_state.StoredState):
         else:
             directory = pathlib.Path()
         type_dir_name = resource.type.replace(":", "-")  # für Windows
-        return directory / type_dir_name / f"{resource.name}.yaml"
+        basename = resource.name.strip("/").replace("/", "-")
+        path = directory / type_dir_name / basename
+        return path.with_suffix(".yaml")
 
     def save(self):
         """Writes the contents of the state to a directory."""
