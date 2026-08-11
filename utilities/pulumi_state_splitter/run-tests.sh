@@ -3,25 +3,15 @@
 set -o errexit
 set -o nounset
 
-PYTHON=python3.11
-
-$PYTHON -m pip \
-  install \
-  --quiet \
-  poetry
-
 cd "$(dirname $0)"
 
 mkdir -p bin
 
-$PYTHON -m poetry \
-  install \
-  --quiet \
-  --with test
+uv sync --quiet
 
 PULUMI_PYTHON_VERSION="$(
-  $PYTHON -m poetry show pulumi |
-  awk '$1 == "version" { print "v" $3}'
+  uv pip show pulumi |
+  awk '$1 == "Version:" { print "v" $2}'
 )"
 
 PULUMI_BIN_VERSION="$(bin/pulumi version 2>/dev/null || echo none)"
@@ -47,8 +37,7 @@ PATH="$PWD/bin:$PATH"
 
 set +o errexit
 
-$PYTHON -m poetry \
-  run \
+uv run \
   coverage run \
     --source=pulumi_state_splitter \
     --omit=__main__.py \
@@ -58,8 +47,7 @@ TESTS_EXIT_CODE="$?"
 
 set -o errexit
 
-$PYTHON -m poetry \
-  run \
+uv run \
   coverage \
   report \
   --fail-under=100 \
@@ -70,8 +58,7 @@ export TEST_BACKEND_DIRECTORY="$(mktemp -d)"
 cp -r tests/data/multi_stack_split/* "$TEST_BACKEND_DIRECTORY"
 
 # Basic smoke test for the CLI
-$PYTHON -m poetry \
-  run -- \
+uv run -- \
   pulumi_state_splitter \
   --backend-directory "$TEST_BACKEND_DIRECTORY" \
   run -- \
