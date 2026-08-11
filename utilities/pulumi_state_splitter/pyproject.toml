@@ -24,7 +24,7 @@ dependencies = [
 pulumi_state_splitter = "pulumi_state_splitter:cli"
 
 [dependency-groups]
-test = [
+dev = [
     "dill>=0.3.7,<0.4",
     "coverage>=7.3.4,<8",
     "pulumi>=3.99.0,<4",
