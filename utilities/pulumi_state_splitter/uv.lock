@@ -413,7 +413,6 @@ dependencies = [
 [package.dev-dependencies]
 dev = [
     { name = "coverage" },
-    { name = "dill" },
     { name = "parameterized" },
     { name = "pulumi" },
     { name = "pulumi-command" },
@@ -431,7 +430,6 @@ requires-dist = [
 [package.metadata.requires-dev]
 dev = [
     { name = "coverage", specifier = ">=7.3.4,<8" },
-    { name = "dill", specifier = ">=0.3.7,<0.4" },
     { name = "parameterized", specifier = ">=0.9.0,<0.10" },
     { name = "pulumi", specifier = ">=3.99.0,<4" },
     { name = "pulumi-command", specifier = ">=0.10.0" },
