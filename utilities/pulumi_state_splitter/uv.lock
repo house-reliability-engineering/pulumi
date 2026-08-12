@@ -412,15 +412,11 @@ dependencies = [
 
 [package.dev-dependencies]
 test = [
-    { name = "black" },
     { name = "coverage" },
     { name = "dill" },
-    { name = "isort" },
     { name = "parameterized" },
     { name = "pulumi" },
     { name = "pulumi-command" },
-    { name = "pycodestyle" },
-    { name = "pylint" },
     { name = "typeguard" },
 ]
 
@@ -434,15 +430,11 @@ requires-dist = [
 
 [package.metadata.requires-dev]
 test = [
-    { name = "black", specifier = ">=24.1.1,<25" },
     { name = "coverage", specifier = ">=7.3.4,<8" },
     { name = "dill", specifier = ">=0.3.7,<0.4" },
-    { name = "isort", specifier = ">=5.13.2,<6" },
     { name = "parameterized", specifier = ">=0.9.0,<0.10" },
     { name = "pulumi", specifier = ">=3.99.0,<4" },
     { name = "pulumi-command", specifier = ">=0.10.0" },
-    { name = "pycodestyle", specifier = ">=2.11.1,<3" },
-    { name = "pylint", specifier = ">=3.0.3,<4" },
     { name = "typeguard", specifier = ">=4.1.5,<5" },
 ]
 
