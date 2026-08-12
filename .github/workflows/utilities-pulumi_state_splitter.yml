@@ -12,13 +12,6 @@ jobs:
     name: tests
     steps:
       - uses: actions/checkout@master
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-      - uses: actions/cache@v3
-        with:
-          path: ~/.cache/pypoetry
-          key: ${{ hashFiles('utilities/pulumi_state_splitter/poetry.lock') }}
+      - uses: astral-sh/setup-uv@ae62891fec2bb8e7d6c99fc78c9fec3a63790f8d
       - name: Run tests
         run: ./utilities/pulumi_state_splitter/run-tests.sh
-
