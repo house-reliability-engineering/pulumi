@@ -49,6 +49,15 @@ class StoredState(pydantic.BaseModel, abc.ABC):
             ),
         )
 
+    @property
+    @abc.abstractmethod
+    def path(self) -> pathlib.Path:
+        """Path to the state."""
+
+    def exists(self) -> bool:
+        """Checks if the state exists."""
+        return self.path.exists()
+
     @classmethod
     @abc.abstractmethod
     def find(cls, backend_dir: pathlib.Path) -> Iterable[StackName]:

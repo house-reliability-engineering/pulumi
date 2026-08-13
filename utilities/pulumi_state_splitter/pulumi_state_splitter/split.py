@@ -46,6 +46,10 @@ class StateDir(pulumi_state_splitter.stored_state.StoredState):
         for d in (self.path, self.path.parent):
             pulumi_state_splitter.fs.rmdir_if_empty(d)
 
+    def exists(self) -> bool:
+        """Checks if the split state exists."""
+        return self._state_path.is_file()
+
     @classmethod
     def find(
         cls, backend_dir: pathlib.Path
@@ -161,8 +165,9 @@ class Unsplitter(pydantic.BaseModel):
                 backend_dir=self.backend_dir,
                 stack_name=stack_name,
             )
-            state_dir.load()
-            state_dir.unsplit()
+            if state_dir.exists():
+                state_dir.load()
+                state_dir.unsplit()
 
     def __exit__(self, type_, value, traceback):
         stacks_names = self.stacks_names
@@ -175,5 +180,6 @@ class Unsplitter(pydantic.BaseModel):
                 backend_dir=self.backend_dir,
                 stack_name=stack_name,
             )
-            state_file.load()
-            StateDir.split_state_file(state_file)
+            if state_file.exists():
+                state_file.load()
+                StateDir.split_state_file(state_file)
