@@ -2,7 +2,7 @@
 
 import abc
 import pathlib
-from typing import Iterable, Optional
+from typing import Iterable, Optional, Self, Sequence
 
 import pydantic
 
@@ -59,9 +59,27 @@ class StoredState(pydantic.BaseModel, abc.ABC):
         return self.path.exists()
 
     @classmethod
+    def _get_existing(
+        cls,
+        backend_dir: pathlib.Path,
+        stacks_names: Sequence[StackName],
+    ) -> Iterable[Self]:
+        for stack_name in stacks_names:
+            state = cls(
+                backend_dir=backend_dir,
+                stack_name=stack_name,
+            )
+            if state.exists():
+                yield state
+
+    @classmethod
     @abc.abstractmethod
-    def find(cls, backend_dir: pathlib.Path) -> Iterable[StackName]:
-        """Finds all states in the Pulumi backend directory."""
+    def find(
+        cls,
+        backend_dir: pathlib.Path,
+        stacks_names: Optional[Sequence[StackName]],
+    ) -> Iterable[Self]:
+        """Finds states in the Pulumi backend directory."""
 
     @abc.abstractmethod
     def remove(self):

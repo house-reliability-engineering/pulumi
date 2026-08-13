@@ -78,6 +78,44 @@ MULTI_STACK_NAMES = [
     ]
 ]
 
+
+FOUND_STACKS_NAMES = [
+    [MULTI_STACK_NAMES, None],
+    [
+        [
+            pulumi_state_splitter.stored_state.StackName(
+                project="test-project-1",
+                stack="test-stack-1",
+            ),
+            pulumi_state_splitter.stored_state.StackName(
+                project="test-project-2",
+                stack="test-stack-3",
+            ),
+        ],
+    ]
+    * 2,
+    [
+        _existing := [
+            pulumi_state_splitter.stored_state.StackName(
+                project="test-project-1",
+                stack="test-stack-1",
+            ),
+            pulumi_state_splitter.stored_state.StackName(
+                project="test-project-2",
+                stack="test-stack-3",
+            ),
+        ],
+        [
+            *_existing,
+            pulumi_state_splitter.stored_state.StackName(
+                project="non",
+                stack="existent",
+            ),
+        ],
+    ],
+]
+
+
 MULTI_STACK_MODELS = [
     {
         "stack_name": pulumi_state_splitter.stored_state.StackName(

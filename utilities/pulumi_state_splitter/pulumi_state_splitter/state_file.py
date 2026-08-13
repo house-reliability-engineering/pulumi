@@ -1,7 +1,7 @@
 """Manipulation of the Pulumi stack state file."""
 
 import pathlib
-from typing import Iterable, List
+from typing import Iterable, List, Optional, Self, Sequence
 
 import pulumi_state_splitter.fs
 import pulumi_state_splitter.model
@@ -58,15 +58,22 @@ class StateFile(pulumi_state_splitter.stored_state.StoredState):
 
     @classmethod
     def find(
-        cls, backend_dir: pathlib.Path
-    ) -> Iterable[pulumi_state_splitter.stored_state.StackName]:
-        """Finds all file states in the Pulumi backend directory."""
-        glob_states = cls._glob_all().path
-        for stack_path in backend_dir.glob(str(glob_states)):
-            yield pulumi_state_splitter.stored_state.StackName(
-                project=stack_path.parent.name,
-                stack=stack_path.with_suffix("").name,
+        cls,
+        backend_dir: pathlib.Path,
+        stacks_names: Optional[Sequence[pulumi_state_splitter.stored_state.StackName]],
+    ) -> Iterable[Self]:
+        """Finds file states in the Pulumi backend directory."""
+        if stacks_names is None:
+            glob_states = cls._glob_all().path
+            stacks_names = (
+                pulumi_state_splitter.stored_state.StackName(
+                    project=path.parent.name,
+                    stack=path.with_suffix("").name,
+                )
+                for path in backend_dir.glob(str(glob_states))
             )
+
+        return cls._get_existing(backend_dir, stacks_names)
 
     def remove(self):
         self.path.unlink()

@@ -67,13 +67,10 @@ def split(
     stacks_names: Optional[Sequence["pulumi_state_splitter.stored_state.StackName"]],
 ):
     """Splits single Pulumi stack state files into multiple files each."""
-    if stacks_names is None:
-        stacks_names = pulumi_state_splitter.state_file.StateFile.find(backend_dir)
-    for stack_name in stacks_names:
-        state_file = pulumi_state_splitter.state_file.StateFile(
-            backend_dir=backend_dir,
-            stack_name=stack_name,
-        )
+    for state_file in pulumi_state_splitter.state_file.StateFile.find(
+        backend_dir,
+        stacks_names,
+    ):
         state_file.load()
         pulumi_state_splitter.split.StateDir.split_state_file(state_file)
 
@@ -84,13 +81,10 @@ def unsplit(
     stacks_names: Optional[Sequence[pulumi_state_splitter.stored_state.StackName]],
 ):
     """Merges split Pulumi stack states into single state file each."""
-    if stacks_names is None:
-        stacks_names = pulumi_state_splitter.split.StateDir.find(backend_dir)
-    for stack_name in stacks_names:
-        state_dir = pulumi_state_splitter.split.StateDir(
-            backend_dir=backend_dir,
-            stack_name=stack_name,
-        )
+    for state_dir in pulumi_state_splitter.split.StateDir.find(
+        backend_dir,
+        stacks_names,
+    ):
         state_dir.load()
         state_dir.unsplit()
 

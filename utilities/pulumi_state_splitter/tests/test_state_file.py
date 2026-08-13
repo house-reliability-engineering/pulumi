@@ -4,6 +4,7 @@ import json
 import pathlib
 import unittest
 
+import parameterized
 import typeguard
 
 with typeguard.install_import_hook("pulumi_state_splitter"):
@@ -86,12 +87,19 @@ class TestStateFilePure(unittest.TestCase):
 class TestStateFileFilesystem(util.TmpDirTest):
     """Testing pulumi_state_splitter.state_file with filesystem interactions"""
 
-    def test_find(self):
+    @parameterized.parameterized.expand(data.FOUND_STACKS_NAMES)
+    def test_find(self, want, stacks_names):
         """Testing `StateFile.find`."""
         data.multi_stack_unsplit().save(self._tmp_dir)
         self.assertCountEqual(
-            pulumi_state_splitter.state_file.StateFile.find(self._tmp_dir),
-            data.MULTI_STACK_NAMES,
+            [
+                s.stack_name
+                for s in pulumi_state_splitter.state_file.StateFile.find(
+                    self._tmp_dir,
+                    stacks_names,
+                )
+            ],
+            want,
         )
 
     def test_load(self):

@@ -165,12 +165,19 @@ class TestStateDirFilesystem(util.TmpDirTest):
         }
     )
 
-    def test_find(self):
+    @parameterized.parameterized.expand(data.FOUND_STACKS_NAMES)
+    def test_find(self, want, stacks_names):
         """Testing `StateDir.find`."""
         data.multi_stack_split().save(self._tmp_dir)
         self.assertCountEqual(
-            pulumi_state_splitter.split.StateDir.find(self._tmp_dir),
-            data.MULTI_STACK_NAMES,
+            [
+                s.stack_name
+                for s in pulumi_state_splitter.split.StateDir.find(
+                    self._tmp_dir,
+                    stacks_names,
+                )
+            ],
+            want,
         )
 
     def test_load_trivial(self):
