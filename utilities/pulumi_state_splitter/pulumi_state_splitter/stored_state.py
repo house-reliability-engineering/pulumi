@@ -2,7 +2,7 @@
 
 import abc
 import pathlib
-from typing import Iterable, Optional, Self, Sequence
+from typing import ClassVar, Iterable, Optional, Self, Sequence
 
 import pydantic
 
@@ -11,6 +11,9 @@ import pulumi_state_splitter.model
 
 class StackName(pydantic.BaseModel):
     """Represents a fully qualified stack name."""
+
+    # https://github.com/pulumi/pulumi/blob/2b0c722/sdk/go/common/tokens/stack_type.go#L18
+    TYPE: ClassVar[str] = "pulumi:pulumi:Stack"
 
     project: str
     stack: str

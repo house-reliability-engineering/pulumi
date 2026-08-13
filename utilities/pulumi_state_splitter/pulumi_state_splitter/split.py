@@ -39,7 +39,7 @@ class StateDir(pulumi_state_splitter.stored_state.StoredState):
         if self.state.checkpoint.latest:
             for resource in self.state.checkpoint.latest.resources:
                 path = self.path / self.resource_subpath(resource)
-                if resource.type == "pulumi:pulumi:Stack":
+                if resource.type == self.stack_name.TYPE:
                     (self.path / "outputs.yaml").unlink()
                 path.unlink()
                 pulumi_state_splitter.fs.rmdir_if_empty(path.parent)
@@ -85,7 +85,7 @@ class StateDir(pulumi_state_splitter.stored_state.StoredState):
                 with (dirpath / filename).open() as f:
                     data = yaml.load(f, yaml.Loader)
                 resource = pulumi_state_splitter.model.Resource.model_validate(data)
-                if resource.type == "pulumi:pulumi:Stack":
+                if resource.type == self.stack_name.TYPE:
                     with (self.path / "outputs.yaml").open() as f:
                         resource.outputs = yaml.load(f, yaml.Loader)
                 resources.append(resource)
