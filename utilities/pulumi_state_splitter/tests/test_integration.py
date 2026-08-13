@@ -125,21 +125,18 @@ class TestPulumiIntegration(util.TmpDirTest):
 
             pulumi.export("test-output", ref.stdout)
 
-        with pulumi_state_splitter.split.Unsplitter(
-            backend_dir=self._tmp_dir,
-            stacks_names=None,
-        ):
-            stack = self._create_stack("test-stack", pulumi_program)
+        stack_name = pulumi_state_splitter.stored_state.StackName(
+            project=self._PROJECT_NAME,
+            stack="test-stack",
+        )
 
         unsplitter = pulumi_state_splitter.split.Unsplitter(
             backend_dir=self._tmp_dir,
-            stacks_names=[
-                pulumi_state_splitter.stored_state.StackName(
-                    project=self._PROJECT_NAME,
-                    stack=stack.name,
-                )
-            ],
+            stacks_names=[stack_name],
         )
+
+        with unsplitter:
+            stack = self._create_stack(stack_name.stack, pulumi_program)
 
         resource_count = (
             1  # the provider

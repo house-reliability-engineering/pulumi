@@ -3,6 +3,7 @@
 import pathlib
 import unittest
 
+import parameterized
 import typeguard
 import yaml
 
@@ -358,14 +359,27 @@ class TestStateDirFilesystem(util.TmpDirTest):
 class TestUnsplitter(util.TmpDirTest):
     """Testing `Unsplitter`."""
 
-    def test_unsplitter_some_stacks(self):
+    @parameterized.parameterized.expand(
+        (
+            [],
+            [
+                pulumi_state_splitter.stored_state.StackName.from_path(
+                    "test-project-1/missing-stack"
+                )
+            ],
+        )
+    )
+    def test_unsplitter_some_stacks(self, *extra):
         """Testing `Unsplitter` with specified stacks."""
         input_ = data.multi_stack_split()
         input_.save(self._tmp_dir)
 
         with pulumi_state_splitter.split.Unsplitter(
             backend_dir=self._tmp_dir,
-            stacks_names=data.MULTI_STACK_NAMES[:2],
+            stacks_names=[
+                *data.MULTI_STACK_NAMES[:2],
+                *extra,
+            ],
         ):
             got = util.Directory.load(self._tmp_dir)
             want = data.multi_stack_unsplit()
