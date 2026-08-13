@@ -1,6 +1,5 @@
 """Manipulation of a split stack state file."""
 
-import os
 import pathlib
 from typing import Iterable, Optional, Self, Sequence
 
@@ -69,6 +68,17 @@ class StateDir(pulumi_state_splitter.stored_state.StoredState):
 
         return cls._get_existing(backend_dir, stacks_names)
 
+    def _load_resource(
+        self, path: pathlib.Path
+    ) -> pulumi_state_splitter.model.Resource:
+        with path.open() as f:
+            data = yaml.load(f, yaml.Loader)
+        resource = pulumi_state_splitter.model.Resource.model_validate(data)
+        if resource.type == self.stack_name.TYPE:
+            with (self.path / "outputs.yaml").open() as f:
+                resource.outputs = yaml.load(f, yaml.Loader)
+        return resource
+
     def load(self):
         """Loads the contents of the state directory."""
         with self._state_path.open() as f:
@@ -76,21 +86,13 @@ class StateDir(pulumi_state_splitter.stored_state.StoredState):
         self.state = pulumi_state_splitter.model.State.model_validate(data)
         if not self.state.checkpoint.latest:
             return
-        resources = []
-        for dirpath, _, filenames in os.walk(self.path):
-            dirpath = pathlib.Path(dirpath)
-            if dirpath == self.path:
-                continue
-            for filename in filenames:
-                with (dirpath / filename).open() as f:
-                    data = yaml.load(f, yaml.Loader)
-                resource = pulumi_state_splitter.model.Resource.model_validate(data)
-                if resource.type == self.stack_name.TYPE:
-                    with (self.path / "outputs.yaml").open() as f:
-                        resource.outputs = yaml.load(f, yaml.Loader)
-                resources.append(resource)
         self.state.checkpoint.latest.resources = (
-            pulumi_state_splitter.model.Resource.find_parents(resources)
+            pulumi_state_splitter.model.Resource.find_parents(
+                self._load_resource(dirpath / filename)
+                for dirpath, _, filenames in self.path.walk()
+                if dirpath != self.path
+                for filename in filenames
+            )
         )
 
     @classmethod
