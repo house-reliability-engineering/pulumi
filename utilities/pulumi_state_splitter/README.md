@@ -18,7 +18,7 @@ state by the Pulumi command.
 ## Usage
 
 ```console
-utilities/pulumi_state_splitter$ poetry run pulumi_state_splitter --help
+utilities/pulumi_state_splitter$ uv run pulumi_state_splitter --help
 Usage: pulumi_state_splitter [OPTIONS] COMMAND [ARGS]...
 
   pulumi_yaml_splitter command line interface.
@@ -35,7 +35,7 @@ utilities/pulumi_state_splitter$
 ```
 
 ```console
-utilities/pulumi_state_splitter$ poetry run pulumi_state_splitter run --help
+utilities/pulumi_state_splitter$ uv run pulumi_state_splitter run --help
 Usage: pulumi_state_splitter run [OPTIONS] [COMMAND]...
 
   Runs a command with the stack states unsplit.
@@ -48,7 +48,7 @@ utilities/pulumi_state_splitter$
 ```
 
 ```console
-utilities/pulumi_state_splitter$ poetry run pulumi_state_splitter split --help
+utilities/pulumi_state_splitter$ uv run pulumi_state_splitter split --help
 Usage: pulumi_state_splitter split [OPTIONS]
 
   Splits single Pulumi stack state files into multiple files each.
@@ -61,7 +61,7 @@ utilities/pulumi_state_splitter$
 ```
 
 ```console
-utilities/pulumi_state_splitter$ poetry run pulumi_state_splitter unsplit --help
+utilities/pulumi_state_splitter$ uv run pulumi_state_splitter unsplit --help
 Usage: pulumi_state_splitter unsplit [OPTIONS]
 
   Merges split Pulumi stack states into single state file each.
