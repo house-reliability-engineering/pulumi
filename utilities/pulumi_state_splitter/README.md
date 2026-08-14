@@ -43,6 +43,9 @@ Usage: pulumi_state_splitter run [OPTIONS] [COMMAND]...
 Options:
   -s, --stack PROJECT-NAME/STACK-NAME
                                   process only these stacks
+  -o, --outputs                   unsplit outputs of all other stacks for
+                                  stack references when -s/--stack is
+                                  specified
   --help                          Show this message and exit.
 utilities/pulumi_state_splitter$
 ```
@@ -69,6 +72,9 @@ Usage: pulumi_state_splitter unsplit [OPTIONS]
 Options:
   -s, --stack PROJECT-NAME/STACK-NAME
                                   process only these stacks
+  -o, --outputs                   unsplit outputs of all other stacks for
+                                  stack references when -s/--stack is
+                                  specified
   --help                          Show this message and exit.
 utilities/pulumi_state_splitter$
 ```

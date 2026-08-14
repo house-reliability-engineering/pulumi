@@ -61,6 +61,18 @@ def _command(f):
     return maybe_all_stacks
 
 
+def _outputs(f):
+    return click.option(
+        "-o",
+        "--outputs",
+        help=(
+            "unsplit outputs of all other stacks for stack "
+            "references when -s/--stack is specified"
+        ),
+        is_flag=True,
+    )(f)
+
+
 @_command
 def split(
     backend_dir: pathlib.Path,
@@ -75,31 +87,37 @@ def split(
         pulumi_state_splitter.split.StateDir.split_state_file(state_file)
 
 
+@_outputs
 @_command
 def unsplit(
     backend_dir: pathlib.Path,
     stacks_names: Optional[Sequence[pulumi_state_splitter.stored_state.StackName]],
+    outputs: bool,
 ):
     """Merges split Pulumi stack states into single state file each."""
     for state_dir in pulumi_state_splitter.split.StateDir.find(
         backend_dir,
         stacks_names,
+        outputs,
     ):
         state_dir.load()
         state_dir.unsplit()
 
 
 @click.argument("command", nargs=-1)
+@_outputs
 @_command
 def run(
     backend_dir: pathlib.Path,
     stacks_names: Optional[Sequence[pulumi_state_splitter.stored_state.StackName]],
+    outputs: bool,
     command: str,
 ):
     """Runs a command with the stack states unsplit."""
     with pulumi_state_splitter.split.Unsplitter(
         backend_dir=backend_dir,
         stacks_names=stacks_names,
+        outputs=outputs,
     ):
         completed = subprocess.run(command, check=False)
     sys.exit(completed.returncode)

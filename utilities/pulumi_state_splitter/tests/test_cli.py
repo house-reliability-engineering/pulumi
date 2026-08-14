@@ -30,8 +30,9 @@ class TestCli(util.TmpDirTest):
         itertools.product(
             [False, True],
             [
-                "split",
-                "unsplit",
+                ("split", False),
+                ("unsplit", False),
+                ("unsplit", True),
             ],
             [
                 [
@@ -42,8 +43,10 @@ class TestCli(util.TmpDirTest):
             ],
         )
     )
-    def test_split_unsplit(self, set_backend_dir, command, stacks):
+    def test_split_unsplit(self, set_backend_dir, command_outputs, stacks):
         """Testing `pulumi_state_splitter.cli`, split and unsplit commands."""
+
+        command, outputs = command_outputs
 
         input_, want = (
             (data.multi_stack_unsplit(), data.multi_stack_split())
@@ -62,6 +65,8 @@ class TestCli(util.TmpDirTest):
         args.append(command)
         for stack in stacks:
             args.extend(["--stack", stack])
+        if outputs:
+            args.append("--outputs")
         if stacks:
             # if stacks is specified, then test-project-2 is not being processed
             if command == "split":
@@ -72,7 +77,8 @@ class TestCli(util.TmpDirTest):
                 }
                 want.pop("test-project-2")
             else:
-                want[".pulumi"]["stacks"].pop("test-project-2")
+                if not outputs:
+                    want[".pulumi"]["stacks"].pop("test-project-2")
                 want["test-project-2"] = input_["test-project-2"]
 
         input_.save(self._tmp_dir)
@@ -81,6 +87,7 @@ class TestCli(util.TmpDirTest):
             self._cli_run(args)
 
         got = util.Directory.load(self._tmp_dir)
+
         want.compare(got, self)
 
     def test_split_run(self):

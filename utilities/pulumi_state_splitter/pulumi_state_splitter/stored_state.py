@@ -34,6 +34,17 @@ class StackName(pydantic.BaseModel):
     def __str__(self) -> str:
         return f"{self.project}/{self.stack}"
 
+    def __hash__(self):
+        return hash(str(self))
+
+    @property
+    def urn(self):
+        """URN of the stack resource with this name"""
+        return (
+            f"urn:pulumi:{self.stack}::{self.project}::"
+            f"{self.TYPE}::{self.project}-{self.stack}"
+        )
+
 
 class StoredState(pydantic.BaseModel, abc.ABC):
     """Represents a stored Pulumi stack state."""
@@ -66,11 +77,15 @@ class StoredState(pydantic.BaseModel, abc.ABC):
         cls,
         backend_dir: pathlib.Path,
         stacks_names: Sequence[StackName],
+        *args,
+        **kwargs,
     ) -> Iterable[Self]:
         for stack_name in stacks_names:
             state = cls(
                 backend_dir=backend_dir,
                 stack_name=stack_name,
+                *args,
+                **kwargs,
             )
             if state.exists():
                 yield state

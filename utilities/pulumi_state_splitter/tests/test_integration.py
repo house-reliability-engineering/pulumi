@@ -4,6 +4,7 @@ import os
 import unittest
 import unittest.mock
 
+import parameterized
 import pulumi
 import pulumi_command
 import typeguard
@@ -190,7 +191,8 @@ class TestPulumiIntegration(util.TmpDirTest):
             {"delete": resource_count},
         )
 
-    def test_stack_reference(self):
+    @parameterized.parameterized.expand([[False], [True]])
+    def test_stack_reference(self, outputs):
         """Pulumi integration test with a stack reference."""
 
         test_string = "test string 1"
@@ -202,12 +204,12 @@ class TestPulumiIntegration(util.TmpDirTest):
             "with-output", pulumi_program_with_output
         )
 
-        unsplitter = pulumi_state_splitter.split.Unsplitter(
+        output_unsplitter = pulumi_state_splitter.split.Unsplitter(
             backend_dir=self._tmp_dir,
             stacks_names=None,
         )
 
-        with unsplitter:
+        with output_unsplitter:
             summary = stack_with_output.up().summary
         self.assertEqual(summary.result, "succeeded")
         self.assertEqual(
@@ -217,21 +219,33 @@ class TestPulumiIntegration(util.TmpDirTest):
 
         self._check_outputs(stack_with_output.name, {"test-output": test_string})
 
+        reference_name = pulumi_state_splitter.stored_state.StackName(
+            project=self._PROJECT_NAME,
+            stack="with-reference",
+        )
+
+        reference_unsplitter = pulumi_state_splitter.split.Unsplitter(
+            backend_dir=self._tmp_dir,
+            stacks_names=[reference_name] if outputs else None,
+            outputs=outputs,
+        )
+
         def pulumi_program_with_reference():
             reference = pulumi.StackReference(
                 f"organization/{self._PROJECT_NAME}/with-output"
             )
             pulumi.export(
                 "test-ref-output",
-                reference.get_output("test-output"),
+                reference.require_output("test-output"),
             )
 
-        with unsplitter:
+        with reference_unsplitter:
             stack_with_reference = self._create_stack(
-                "with-reference", pulumi_program_with_reference
+                reference_name.stack,
+                pulumi_program_with_reference,
             )
 
-        with unsplitter:
+        with reference_unsplitter:
             summary = stack_with_reference.up().summary
 
         self.assertEqual(summary.result, "succeeded")
@@ -243,7 +257,7 @@ class TestPulumiIntegration(util.TmpDirTest):
         self._check_outputs(stack_with_reference.name, {"test-ref-output": test_string})
 
         test_string = "test string 2"
-        with unsplitter:
+        with output_unsplitter:
             summary = stack_with_output.up().summary
         self.assertEqual(summary.result, "succeeded")
         self.assertEqual(
@@ -255,7 +269,7 @@ class TestPulumiIntegration(util.TmpDirTest):
 
         self._check_outputs(stack_with_output.name, {"test-output": test_string})
 
-        with unsplitter:
+        with reference_unsplitter:
             summary = stack_with_reference.up().summary
         self.assertEqual(summary.result, "succeeded")
         self.assertEqual(

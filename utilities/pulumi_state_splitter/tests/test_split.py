@@ -165,8 +165,18 @@ class TestStateDirFilesystem(util.TmpDirTest):
         }
     )
 
-    @parameterized.parameterized.expand(data.FOUND_STACKS_NAMES)
-    def test_find(self, want, stacks_names):
+    # pylint: disable=undefined-variable  # this is for _d
+    @parameterized.parameterized.expand(
+        [
+            (_d := data.FOUND_STACKS_NAMES)[0] + [False],
+            _d[0] + [True],
+            _d[1] + [False],
+            [data.MULTI_STACK_NAMES, _d[1][1], True],
+            _d[2] + [False],
+            [data.MULTI_STACK_NAMES, _d[2][1], True],
+        ]
+    )
+    def test_find(self, want, stacks_names, outputs):
         """Testing `StateDir.find`."""
         data.multi_stack_split().save(self._tmp_dir)
         self.assertCountEqual(
@@ -175,6 +185,7 @@ class TestStateDirFilesystem(util.TmpDirTest):
                 for s in pulumi_state_splitter.split.StateDir.find(
                     self._tmp_dir,
                     stacks_names,
+                    outputs,
                 )
             ],
             want,
@@ -219,6 +230,28 @@ class TestStateDirFilesystem(util.TmpDirTest):
             state_dir.state,
             want,
         )
+
+    def test_load_outputs_only(self):
+        """Testing that `StateDir.load` minimizes filesystem operations."""
+        state_dir = pulumi_state_splitter.split.StateDir(
+            backend_dir=self._tmp_dir,
+            stack_name=data.STACK_NAME,
+            outputs_only=True,
+        )
+
+        self._DIRECTORY.save(self._tmp_dir)
+
+        mock = unittest.mock.Mock(wraps=yaml.load)
+        with unittest.mock.patch(
+            "yaml.load",
+            new=mock,
+        ):
+            state_dir.load()
+            self.assertEqual(
+                mock.call_count,
+                # state.yaml, outputs.yaml and stack resource file
+                3,
+            )
 
     def test_remove(self):
         """Testing `StateDir.remove`."""
