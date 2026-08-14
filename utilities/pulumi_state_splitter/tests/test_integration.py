@@ -183,6 +183,8 @@ class TestPulumiIntegration(util.TmpDirTest):
 
         self._check_outputs(stack.name, {"test-output": test_string})
 
+        self.assertFalse((self._tmp_dir / ".pulumi").exists())
+
         with unsplitter:
             summary = stack.destroy().summary
         self.assertEqual(summary.result, "succeeded")
@@ -281,3 +283,5 @@ class TestPulumiIntegration(util.TmpDirTest):
         )
 
         self._check_outputs(stack_with_reference.name, {"test-ref-output": test_string})
+
+        self.assertFalse((self._tmp_dir / ".pulumi").exists())
