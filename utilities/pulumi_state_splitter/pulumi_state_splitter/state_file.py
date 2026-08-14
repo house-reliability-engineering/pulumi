@@ -1,6 +1,7 @@
 """Manipulation of the Pulumi stack state file."""
 
 import pathlib
+import shutil
 from typing import Iterable, List, Optional, Self, Sequence
 
 import pulumi_state_splitter.fs
@@ -77,6 +78,36 @@ class StateFile(pulumi_state_splitter.stored_state.StoredState):
 
     def remove(self):
         self.path.unlink()
+
+        # Pulumi leaves a lot of extra junk around, so cleaning it up
+
+        for suffix in (
+            ".json.attrs",
+            ".json.bak",
+            ".json.bak.attrs",
+        ):
+            self.path.with_suffix(suffix).unlink(missing_ok=True)
+
+        for subdir in (
+            "backups",
+            "history",
+            pathlib.Path("locks")
+            / pulumi_state_splitter.stored_state.StackName.ORGANIZATION,
+        ):
+            d = (
+                self.backend_dir
+                / ".pulumi"
+                / subdir
+                / self.stack_name.project
+                / self.stack_name.stack
+            )
+            if d.exists():
+                shutil.rmtree(d)
+                for p in d.parents:
+                    if p == self.backend_dir:
+                        break
+                    pulumi_state_splitter.fs.rmdir_if_empty(p)
+
         for d in (
             self.path.parent,
             self.path.parent.parent,

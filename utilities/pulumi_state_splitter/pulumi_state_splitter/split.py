@@ -217,3 +217,12 @@ class Unsplitter(pydantic.BaseModel):
                 continue
             state_file.load()
             StateDir.split_state_file(state_file)
+
+        pulumi_dir = self.backend_dir / ".pulumi"
+        if pulumi_dir.exists():
+            for fn in (
+                "meta.yaml",
+                "meta.yaml.attrs",
+            ):
+                (pulumi_dir / fn).unlink(missing_ok=True)
+            pulumi_dir.rmdir()

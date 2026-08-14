@@ -14,6 +14,8 @@ class StackName(pydantic.BaseModel):
 
     # https://github.com/pulumi/pulumi/blob/2b0c722/sdk/go/common/tokens/stack_type.go#L18
     TYPE: ClassVar[str] = "pulumi:pulumi:Stack"
+    # https://github.com/pulumi/pulumi/blob/936ffe5d59ae665f8dbfa2e5eb6c2c2262a08e89/pkg/backend/filestate/store.go#L170-L172
+    ORGANIZATION: ClassVar[str] = "organization"
 
     project: str
     stack: str
@@ -23,7 +25,7 @@ class StackName(pydantic.BaseModel):
         """Converts a stack path to a `StackName`."""
         pieces = path.split("/")
         # https://github.com/pulumi/pulumi/blob/936ffe5d59ae665f8dbfa2e5eb6c2c2262a08e89/pkg/backend/filestate/store.go#L170-L172
-        if len(pieces) == 3 and pieces[0] == "organization":
+        if len(pieces) == 3 and pieces[0] == cls.ORGANIZATION:
             pieces = pieces[1:]
         if len(pieces) != 2:
             raise ValueError(
