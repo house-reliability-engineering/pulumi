@@ -2,7 +2,7 @@
 
 import abc
 import pathlib
-from typing import Iterable, Optional
+from typing import ClassVar, Iterable, Optional, Self, Sequence
 
 import pydantic
 
@@ -12,6 +12,11 @@ import pulumi_state_splitter.model
 class StackName(pydantic.BaseModel):
     """Represents a fully qualified stack name."""
 
+    # https://github.com/pulumi/pulumi/blob/2b0c722/sdk/go/common/tokens/stack_type.go#L18
+    ROOT_STACK_TYPE: ClassVar[str] = "pulumi:pulumi:Stack"
+    # https://github.com/pulumi/pulumi/blob/936ffe5d59ae665f8dbfa2e5eb6c2c2262a08e89/pkg/backend/filestate/store.go#L170-L172
+    ORGANIZATION: ClassVar[str] = "organization"
+
     project: str
     stack: str
 
@@ -20,7 +25,7 @@ class StackName(pydantic.BaseModel):
         """Converts a stack path to a `StackName`."""
         pieces = path.split("/")
         # https://github.com/pulumi/pulumi/blob/936ffe5d59ae665f8dbfa2e5eb6c2c2262a08e89/pkg/backend/filestate/store.go#L170-L172
-        if len(pieces) == 3 and pieces[0] == "organization":
+        if len(pieces) == 3 and pieces[0] == cls.ORGANIZATION:
             pieces = pieces[1:]
         if len(pieces) != 2:
             raise ValueError(
@@ -30,6 +35,17 @@ class StackName(pydantic.BaseModel):
 
     def __str__(self) -> str:
         return f"{self.project}/{self.stack}"
+
+    def __hash__(self):
+        return hash(str(self))
+
+    @property
+    def urn(self):
+        """URN of the stack resource with this name"""
+        return (
+            f"urn:pulumi:{self.stack}::{self.project}::"
+            f"{self.ROOT_STACK_TYPE}::{self.project}-{self.stack}"
+        )
 
 
 class StoredState(pydantic.BaseModel, abc.ABC):
@@ -49,10 +65,41 @@ class StoredState(pydantic.BaseModel, abc.ABC):
             ),
         )
 
+    @property
+    @abc.abstractmethod
+    def path(self) -> pathlib.Path:
+        """Path to the state."""
+
+    def exists(self) -> bool:
+        """Checks if the state exists."""
+        return self.path.exists()
+
+    @classmethod
+    def _get_existing(
+        cls,
+        backend_dir: pathlib.Path,
+        stacks_names: Sequence[StackName],
+        *args,
+        **kwargs,
+    ) -> Iterable[Self]:
+        for stack_name in stacks_names:
+            state = cls(
+                backend_dir=backend_dir,
+                stack_name=stack_name,
+                *args,
+                **kwargs,
+            )
+            if state.exists():
+                yield state
+
     @classmethod
     @abc.abstractmethod
-    def find(cls, backend_dir: pathlib.Path) -> Iterable[StackName]:
-        """Finds all states in the Pulumi backend directory."""
+    def find(
+        cls,
+        backend_dir: pathlib.Path,
+        stacks_names: Optional[Sequence[StackName]],
+    ) -> Iterable[Self]:
+        """Finds states in the Pulumi backend directory."""
 
     @abc.abstractmethod
     def remove(self):

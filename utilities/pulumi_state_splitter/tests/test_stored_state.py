@@ -48,3 +48,14 @@ class TestStackName(unittest.TestCase):
         path = "foo"
         with self.assertRaises(ValueError):
             pulumi_state_splitter.stored_state.StackName.from_path(path)
+
+    def test_urn(self):
+        """Testing `pulumi_state_splitter.stored_state.StackName.urn`"""
+        name = pulumi_state_splitter.stored_state.StackName(
+            project="<project>",
+            stack="<stack>",
+        )
+        self.assertEqual(
+            name.urn,
+            "urn:pulumi:<stack>::<project>::pulumi:pulumi:Stack::<project>-<stack>",
+        )

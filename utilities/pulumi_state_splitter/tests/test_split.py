@@ -3,6 +3,7 @@
 import pathlib
 import unittest
 
+import parameterized
 import typeguard
 import yaml
 
@@ -164,12 +165,30 @@ class TestStateDirFilesystem(util.TmpDirTest):
         }
     )
 
-    def test_find(self):
+    @parameterized.parameterized.expand(
+        (
+            (
+                stacks_names,
+                outputs,
+                data.MULTI_STACK_NAMES if outputs else want,
+            )
+            for stacks_names, want in data.FOUND_STACKS_NAMES.items()
+            for outputs in (False, True)
+        )
+    )
+    def test_find(self, stacks_names, outputs, want):
         """Testing `StateDir.find`."""
         data.multi_stack_split().save(self._tmp_dir)
         self.assertCountEqual(
-            pulumi_state_splitter.split.StateDir.find(self._tmp_dir),
-            data.MULTI_STACK_NAMES,
+            [
+                s.stack_name
+                for s in pulumi_state_splitter.split.StateDir.find(
+                    self._tmp_dir,
+                    stacks_names,
+                    outputs,
+                )
+            ],
+            want,
         )
 
     def test_load_trivial(self):
@@ -211,6 +230,28 @@ class TestStateDirFilesystem(util.TmpDirTest):
             state_dir.state,
             want,
         )
+
+    def test_load_outputs_only(self):
+        """Testing that `StateDir.load` minimizes filesystem operations."""
+        state_dir = pulumi_state_splitter.split.StateDir(
+            backend_dir=self._tmp_dir,
+            stack_name=data.STACK_NAME,
+            outputs_only=True,
+        )
+
+        self._DIRECTORY.save(self._tmp_dir)
+
+        mock = unittest.mock.Mock(wraps=yaml.load)
+        with unittest.mock.patch(
+            "yaml.load",
+            new=mock,
+        ):
+            state_dir.load()
+            self.assertEqual(
+                mock.call_count,
+                # state.yaml, outputs.yaml and stack resource file
+                3,
+            )
 
     def test_remove(self):
         """Testing `StateDir.remove`."""
@@ -358,14 +399,27 @@ class TestStateDirFilesystem(util.TmpDirTest):
 class TestUnsplitter(util.TmpDirTest):
     """Testing `Unsplitter`."""
 
-    def test_unsplitter_some_stacks(self):
+    @parameterized.parameterized.expand(
+        (
+            [],
+            [
+                pulumi_state_splitter.stored_state.StackName.from_path(
+                    "test-project-1/missing-stack"
+                )
+            ],
+        )
+    )
+    def test_unsplitter_some_stacks(self, *extra):
         """Testing `Unsplitter` with specified stacks."""
         input_ = data.multi_stack_split()
         input_.save(self._tmp_dir)
 
         with pulumi_state_splitter.split.Unsplitter(
             backend_dir=self._tmp_dir,
-            stacks_names=data.MULTI_STACK_NAMES[:2],
+            stacks_names=[
+                *data.MULTI_STACK_NAMES[:2],
+                *extra,
+            ],
         ):
             got = util.Directory.load(self._tmp_dir)
             want = data.multi_stack_unsplit()

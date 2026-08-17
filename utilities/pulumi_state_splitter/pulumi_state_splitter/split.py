@@ -1,8 +1,7 @@
 """Manipulation of a split stack state file."""
 
-import os
 import pathlib
-from typing import Iterable, Optional, Sequence
+from typing import Iterable, Optional, Self, Sequence
 
 import pydantic
 import yaml
@@ -15,6 +14,8 @@ import pulumi_state_splitter.stored_state
 
 class StateDir(pulumi_state_splitter.stored_state.StoredState):
     """Represents a split Pulumi stack state."""
+
+    outputs_only: bool = False
 
     @property
     def path(self) -> pathlib.Path:
@@ -39,25 +40,59 @@ class StateDir(pulumi_state_splitter.stored_state.StoredState):
         if self.state.checkpoint.latest:
             for resource in self.state.checkpoint.latest.resources:
                 path = self.path / self.resource_subpath(resource)
-                if resource.type == "pulumi:pulumi:Stack":
+                if resource.type == self.stack_name.ROOT_STACK_TYPE:
                     (self.path / "outputs.yaml").unlink()
                 path.unlink()
                 pulumi_state_splitter.fs.rmdir_if_empty(path.parent)
         for d in (self.path, self.path.parent):
             pulumi_state_splitter.fs.rmdir_if_empty(d)
 
+    def exists(self) -> bool:
+        """Checks if the split state exists."""
+        return self._state_path.is_file()
+
     @classmethod
     def find(
-        cls, backend_dir: pathlib.Path
-    ) -> Iterable[pulumi_state_splitter.stored_state.StackName]:
-        """Finds all directory states in the Pulumi backend directory."""
-        glob_states = cls._glob_all()._state_path
-        for state_path in backend_dir.glob(str(glob_states)):
-            stack_dir = state_path.parent
-            yield pulumi_state_splitter.stored_state.StackName(
-                project=stack_dir.parent.name,
-                stack=stack_dir.name,
-            )
+        cls,
+        backend_dir: pathlib.Path,
+        stacks_names: Optional[Sequence[pulumi_state_splitter.stored_state.StackName]],
+        outputs: bool = False,
+    ) -> Iterable[Self]:
+        """Finds directory states in the Pulumi backend directory."""
+        if outputs or stacks_names is None:
+            glob_all_states = cls._glob_all()._state_path
+            all_stacks_names = [
+                pulumi_state_splitter.stored_state.StackName(
+                    project=path.parent.parent.name,
+                    stack=path.parent.name,
+                )
+                for path in backend_dir.glob(str(glob_all_states))
+            ]
+            if stacks_names is None:
+                stacks_names = all_stacks_names
+            if outputs:
+                yield from cls._get_existing(
+                    backend_dir,
+                    set(all_stacks_names) - set(stacks_names),
+                    outputs_only=True,
+                )
+
+        yield from cls._get_existing(
+            backend_dir,
+            stacks_names,
+            outputs_only=False,
+        )
+
+    def _load_resource(
+        self, path: pathlib.Path
+    ) -> pulumi_state_splitter.model.Resource:
+        with path.open() as f:
+            data = yaml.load(f, yaml.Loader)
+        resource = pulumi_state_splitter.model.Resource.model_validate(data)
+        if resource.type == self.stack_name.ROOT_STACK_TYPE:
+            with (self.path / "outputs.yaml").open() as f:
+                resource.outputs = yaml.load(f, yaml.Loader)
+        return resource
 
     def load(self):
         """Loads the contents of the state directory."""
@@ -66,22 +101,27 @@ class StateDir(pulumi_state_splitter.stored_state.StoredState):
         self.state = pulumi_state_splitter.model.State.model_validate(data)
         if not self.state.checkpoint.latest:
             return
-        resources = []
-        for dirpath, _, filenames in os.walk(self.path):
-            dirpath = pathlib.Path(dirpath)
-            if dirpath == self.path:
-                continue
-            for filename in filenames:
-                with (dirpath / filename).open() as f:
-                    data = yaml.load(f, yaml.Loader)
-                resource = pulumi_state_splitter.model.Resource.model_validate(data)
-                if resource.type == "pulumi:pulumi:Stack":
-                    with (self.path / "outputs.yaml").open() as f:
-                        resource.outputs = yaml.load(f, yaml.Loader)
-                resources.append(resource)
-        self.state.checkpoint.latest.resources = (
-            pulumi_state_splitter.model.Resource.find_parents(resources)
-        )
+        if self.outputs_only:
+            self.state.checkpoint.latest.resources = [
+                self._load_resource(
+                    self.path
+                    / self.resource_subpath(
+                        pulumi_state_splitter.model.Resource(
+                            type=self.stack_name.ROOT_STACK_TYPE,
+                            urn=self.stack_name.urn,
+                        ),
+                    )
+                )
+            ]
+        else:
+            self.state.checkpoint.latest.resources = (
+                pulumi_state_splitter.model.Resource.find_parents(
+                    self._load_resource(dirpath / filename)
+                    for dirpath, _, filenames in self.path.walk()
+                    if dirpath != self.path
+                    for filename in filenames
+                )
+            )
 
     @classmethod
     def resource_subpath(
@@ -141,7 +181,8 @@ class StateDir(pulumi_state_splitter.stored_state.StoredState):
         """Merges a split Pulumi stack state into single state file."""
         state_file = self.to_state_file()
         state_file.save()
-        self.remove()
+        if not self.outputs_only:
+            self.remove()
 
 
 class Unsplitter(pydantic.BaseModel):
@@ -151,29 +192,36 @@ class Unsplitter(pydantic.BaseModel):
     stacks_names: Optional[Sequence[pulumi_state_splitter.stored_state.StackName]] = (
         pydantic.Field(default_factory=list)
     )
+    outputs: bool = False
 
     def __enter__(self):
-        stacks_names = self.stacks_names
-        if stacks_names is None:
-            stacks_names = StateDir.find(self.backend_dir)
-        for stack_name in stacks_names:
-            state_dir = pulumi_state_splitter.split.StateDir(
-                backend_dir=self.backend_dir,
-                stack_name=stack_name,
-            )
+        for state_dir in StateDir.find(
+            self.backend_dir,
+            self.stacks_names,
+            self.outputs,
+        ):
             state_dir.load()
             state_dir.unsplit()
 
     def __exit__(self, type_, value, traceback):
-        stacks_names = self.stacks_names
-        if stacks_names is None:
-            stacks_names = pulumi_state_splitter.state_file.StateFile.find(
-                self.backend_dir
-            )
-        for stack_name in stacks_names:
-            state_file = pulumi_state_splitter.state_file.StateFile(
-                backend_dir=self.backend_dir,
-                stack_name=stack_name,
-            )
+        for state_file in pulumi_state_splitter.state_file.StateFile.find(
+            self.backend_dir,
+            None if self.outputs else self.stacks_names,
+        ):
+            if (
+                self.stacks_names is not None
+                and state_file.stack_name not in self.stacks_names
+            ):
+                state_file.remove()
+                continue
             state_file.load()
             StateDir.split_state_file(state_file)
+
+        pulumi_dir = self.backend_dir / ".pulumi"
+        if pulumi_dir.exists():
+            for fn in (
+                "meta.yaml",
+                "meta.yaml.attrs",
+            ):
+                (pulumi_dir / fn).unlink(missing_ok=True)
+            pulumi_dir.rmdir()

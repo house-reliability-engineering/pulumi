@@ -61,51 +61,63 @@ def _command(f):
     return maybe_all_stacks
 
 
+def _outputs(f):
+    return click.option(
+        "-o",
+        "--outputs",
+        help=(
+            "unsplit outputs of all other stacks for stack "
+            "references when -s/--stack is specified"
+        ),
+        is_flag=True,
+    )(f)
+
+
 @_command
 def split(
     backend_dir: pathlib.Path,
     stacks_names: Optional[Sequence["pulumi_state_splitter.stored_state.StackName"]],
 ):
     """Splits single Pulumi stack state files into multiple files each."""
-    if stacks_names is None:
-        stacks_names = pulumi_state_splitter.state_file.StateFile.find(backend_dir)
-    for stack_name in stacks_names:
-        state_file = pulumi_state_splitter.state_file.StateFile(
-            backend_dir=backend_dir,
-            stack_name=stack_name,
-        )
+    for state_file in pulumi_state_splitter.state_file.StateFile.find(
+        backend_dir,
+        stacks_names,
+    ):
         state_file.load()
         pulumi_state_splitter.split.StateDir.split_state_file(state_file)
 
 
+@_outputs
 @_command
 def unsplit(
     backend_dir: pathlib.Path,
     stacks_names: Optional[Sequence[pulumi_state_splitter.stored_state.StackName]],
+    outputs: bool,
 ):
     """Merges split Pulumi stack states into single state file each."""
-    if stacks_names is None:
-        stacks_names = pulumi_state_splitter.split.StateDir.find(backend_dir)
-    for stack_name in stacks_names:
-        state_dir = pulumi_state_splitter.split.StateDir(
-            backend_dir=backend_dir,
-            stack_name=stack_name,
-        )
+    for state_dir in pulumi_state_splitter.split.StateDir.find(
+        backend_dir,
+        stacks_names,
+        outputs,
+    ):
         state_dir.load()
         state_dir.unsplit()
 
 
 @click.argument("command", nargs=-1)
+@_outputs
 @_command
 def run(
     backend_dir: pathlib.Path,
     stacks_names: Optional[Sequence[pulumi_state_splitter.stored_state.StackName]],
+    outputs: bool,
     command: str,
 ):
     """Runs a command with the stack states unsplit."""
     with pulumi_state_splitter.split.Unsplitter(
         backend_dir=backend_dir,
         stacks_names=stacks_names,
+        outputs=outputs,
     ):
         completed = subprocess.run(command, check=False)
     sys.exit(completed.returncode)
