@@ -13,7 +13,7 @@ class StackName(pydantic.BaseModel):
     """Represents a fully qualified stack name."""
 
     # https://github.com/pulumi/pulumi/blob/2b0c722/sdk/go/common/tokens/stack_type.go#L18
-    TYPE: ClassVar[str] = "pulumi:pulumi:Stack"
+    ROOT_STACK_TYPE: ClassVar[str] = "pulumi:pulumi:Stack"
     # https://github.com/pulumi/pulumi/blob/936ffe5d59ae665f8dbfa2e5eb6c2c2262a08e89/pkg/backend/filestate/store.go#L170-L172
     ORGANIZATION: ClassVar[str] = "organization"
 
@@ -44,7 +44,7 @@ class StackName(pydantic.BaseModel):
         """URN of the stack resource with this name"""
         return (
             f"urn:pulumi:{self.stack}::{self.project}::"
-            f"{self.TYPE}::{self.project}-{self.stack}"
+            f"{self.ROOT_STACK_TYPE}::{self.project}-{self.stack}"
         )
 
 
