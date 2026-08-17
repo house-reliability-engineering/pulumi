@@ -165,18 +165,18 @@ class TestStateDirFilesystem(util.TmpDirTest):
         }
     )
 
-    # pylint: disable=undefined-variable  # this is for _d
     @parameterized.parameterized.expand(
-        [
-            (_d := data.FOUND_STACKS_NAMES)[0] + [False],
-            _d[0] + [True],
-            _d[1] + [False],
-            [data.MULTI_STACK_NAMES, _d[1][1], True],
-            _d[2] + [False],
-            [data.MULTI_STACK_NAMES, _d[2][1], True],
-        ]
+        (
+            (
+                stacks_names,
+                outputs,
+                data.MULTI_STACK_NAMES if outputs else want,
+            )
+            for want, stacks_names in data.FOUND_STACKS_NAMES
+            for outputs in (False, True)
+        )
     )
-    def test_find(self, want, stacks_names, outputs):
+    def test_find(self, stacks_names, outputs, want):
         """Testing `StateDir.find`."""
         data.multi_stack_split().save(self._tmp_dir)
         self.assertCountEqual(
