@@ -59,10 +59,9 @@ class StateDir(pulumi_state_splitter.stored_state.StoredState):
         outputs: bool = False,
     ) -> Iterable[Self]:
         """Finds directory states in the Pulumi backend directory."""
-        load_stacks_names = stacks_names
         if outputs or stacks_names is None:
             glob_all_states = cls._glob_all()._state_path
-            load_stacks_names = [
+            all_stacks_names = [
                 pulumi_state_splitter.stored_state.StackName(
                     project=path.parent.parent.name,
                     stack=path.parent.name,
@@ -70,11 +69,11 @@ class StateDir(pulumi_state_splitter.stored_state.StoredState):
                 for path in backend_dir.glob(str(glob_all_states))
             ]
             if stacks_names is None:
-                stacks_names = load_stacks_names
+                stacks_names = all_stacks_names
             if outputs:
                 yield from cls._get_existing(
                     backend_dir,
-                    set(load_stacks_names) - set(stacks_names),
+                    set(all_stacks_names) - set(stacks_names),
                     outputs_only=True,
                 )
 
