@@ -69,44 +69,33 @@ def multi_stack_unsplit() -> util.Directory:
     return util.Directory.load(_DATA_DIR / "multi_stack_unsplit")
 
 
-MULTI_STACK_NAMES = [
-    pulumi_state_splitter.stored_state.StackName.from_path(p)
-    for p in [
-        "test-project-1/test-stack-1",
-        "test-project-1/test-stack-2",
-        "test-project-2/test-stack-3",
-    ]
-]
+PROJECT1_STACK1 = pulumi_state_splitter.stored_state.StackName.from_path(
+    "test-project-1/test-stack-1"
+)
+PROJECT1_STACK2 = pulumi_state_splitter.stored_state.StackName.from_path(
+    "test-project-1/test-stack-2"
+)
+PROJECT2_STACK3 = pulumi_state_splitter.stored_state.StackName.from_path(
+    "test-project-2/test-stack-3"
+)
 
+MULTI_STACK_NAMES = [
+    PROJECT1_STACK1,
+    PROJECT1_STACK2,
+    PROJECT2_STACK3,
+]
 
 FOUND_STACKS_NAMES = [
     [MULTI_STACK_NAMES, None],
+    [[PROJECT1_STACK1, PROJECT2_STACK3]] * 2,
     [
         [
-            pulumi_state_splitter.stored_state.StackName(
-                project="test-project-1",
-                stack="test-stack-1",
-            ),
-            pulumi_state_splitter.stored_state.StackName(
-                project="test-project-2",
-                stack="test-stack-3",
-            ),
-        ],
-    ]
-    * 2,
-    [
-        _existing := [
-            pulumi_state_splitter.stored_state.StackName(
-                project="test-project-1",
-                stack="test-stack-1",
-            ),
-            pulumi_state_splitter.stored_state.StackName(
-                project="test-project-2",
-                stack="test-stack-3",
-            ),
+            PROJECT1_STACK1,
+            PROJECT2_STACK3,
         ],
         [
-            *_existing,
+            PROJECT1_STACK1,
+            PROJECT2_STACK3,
             pulumi_state_splitter.stored_state.StackName(
                 project="non",
                 stack="existent",
@@ -118,22 +107,15 @@ FOUND_STACKS_NAMES = [
 
 MULTI_STACK_MODELS = [
     {
-        "stack_name": pulumi_state_splitter.stored_state.StackName(
-            project=project_name,
-            stack=stack_name,
-        ),
+        "stack_name": stack_name,
         "state": pulumi_state_splitter.model.State(
             checkpoint=pulumi_state_splitter.model.Checkpoint(
-                stack=f"organization/{project_name}/{stack_name}",
+                stack=f"organization/{stack_name.project}/{stack_name.stack}",
             ),
             version=3,
         ),
     }
-    for project_name, stacks_names in {
-        "test-project-1": ["test-stack-1", "test-stack-2"],
-        "test-project-2": ["test-stack-3"],
-    }.items()
-    for stack_name in stacks_names
+    for stack_name in MULTI_STACK_NAMES
 ]
 
 STACK_NAME = pulumi_state_splitter.stored_state.StackName(
