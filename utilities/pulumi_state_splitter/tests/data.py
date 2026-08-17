@@ -85,24 +85,14 @@ MULTI_STACK_NAMES = [
     PROJECT2_STACK3,
 ]
 
-FOUND_STACKS_NAMES = [
-    [MULTI_STACK_NAMES, None],
-    [[PROJECT1_STACK1, PROJECT2_STACK3]] * 2,
-    [
-        [
-            PROJECT1_STACK1,
-            PROJECT2_STACK3,
-        ],
-        [
-            PROJECT1_STACK1,
-            PROJECT2_STACK3,
-            pulumi_state_splitter.stored_state.StackName(
-                project="non",
-                stack="existent",
-            ),
-        ],
-    ],
-]
+FOUND_STACKS_NAMES = {
+    None: MULTI_STACK_NAMES,
+    (_two := (PROJECT1_STACK1, PROJECT2_STACK3)): _two,
+    (
+        *_two,
+        pulumi_state_splitter.stored_state.StackName(project="non", stack="existent"),
+    ): _two,
+}
 
 
 MULTI_STACK_MODELS = [

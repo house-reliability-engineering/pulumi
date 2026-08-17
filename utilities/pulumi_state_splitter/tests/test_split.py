@@ -172,7 +172,7 @@ class TestStateDirFilesystem(util.TmpDirTest):
                 outputs,
                 data.MULTI_STACK_NAMES if outputs else want,
             )
-            for want, stacks_names in data.FOUND_STACKS_NAMES
+            for stacks_names, want in data.FOUND_STACKS_NAMES.items()
             for outputs in (False, True)
         )
     )

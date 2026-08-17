@@ -87,8 +87,8 @@ class TestStateFilePure(unittest.TestCase):
 class TestStateFileFilesystem(util.TmpDirTest):
     """Testing pulumi_state_splitter.state_file with filesystem interactions"""
 
-    @parameterized.parameterized.expand(data.FOUND_STACKS_NAMES)
-    def test_find(self, want, stacks_names):
+    @parameterized.parameterized.expand(data.FOUND_STACKS_NAMES.items())
+    def test_find(self, stacks_names, want):
         """Testing `StateFile.find`."""
         data.multi_stack_unsplit().save(self._tmp_dir)
         self.assertCountEqual(
