@@ -202,14 +202,15 @@ class TestPulumiIntegration(util.TmpDirTest):
         def pulumi_program_with_output():
             pulumi.export("test-output", test_string)
 
-        stack_with_output = self._create_stack(
-            "with-output", pulumi_program_with_output
-        )
-
         output_unsplitter = pulumi_state_splitter.split.Unsplitter(
             backend_dir=self._tmp_dir,
             stacks_names=None,
         )
+
+        with output_unsplitter:
+            stack_with_output = self._create_stack(
+                "with-output", pulumi_program_with_output
+            )
 
         with output_unsplitter:
             summary = stack_with_output.up().summary
@@ -285,3 +286,44 @@ class TestPulumiIntegration(util.TmpDirTest):
         self._check_outputs(stack_with_reference.name, {"test-ref-output": test_string})
 
         self.assertFalse((self._tmp_dir / ".pulumi").exists())
+
+    @parameterized.parameterized.expand([[False], [True]])
+    def test_unititialized_outputs(self, outputs):
+        """Test that we support unsplitting with uninitialized stacks."""
+
+        def bare_pulumi_program():
+            pass
+
+        unsplitter_all = pulumi_state_splitter.split.Unsplitter(
+            backend_dir=self._tmp_dir,
+            stacks_names=None,
+        )
+
+        with unsplitter_all:
+            self._create_stack("bare-1", bare_pulumi_program)
+
+        second_name = pulumi_state_splitter.stored_state.StackName(
+            project=self._PROJECT_NAME,
+            stack="bare-2",
+        )
+
+        unsplitter_second = pulumi_state_splitter.split.Unsplitter(
+            backend_dir=self._tmp_dir,
+            stacks_names=[second_name] if outputs else None,
+            outputs=outputs,
+        )
+
+        with unsplitter_second:
+            second_stack = self._create_stack(
+                second_name.stack,
+                bare_pulumi_program,
+            )
+
+        with unsplitter_second:
+            summary = second_stack.up().summary
+
+        self.assertEqual(summary.result, "succeeded")
+        self.assertEqual(
+            summary.resource_changes,
+            {"create": 1},
+        )

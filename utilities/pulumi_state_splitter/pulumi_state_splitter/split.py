@@ -102,16 +102,18 @@ class StateDir(pulumi_state_splitter.stored_state.StoredState):
         if not self.state.checkpoint.latest:
             return
         if self.outputs_only:
+            stack_resource_path = self.path / self.resource_subpath(
+                pulumi_state_splitter.model.Resource(
+                    type=self.stack_name.ROOT_STACK_TYPE,
+                    urn=self.stack_name.urn,
+                ),
+            )
+            # `pulumi stack new` does not create the stack resource
+            # and we do not want to explode on such state here.
+            if not stack_resource_path.exists():
+                return
             self.state.checkpoint.latest.resources = [
-                self._load_resource(
-                    self.path
-                    / self.resource_subpath(
-                        pulumi_state_splitter.model.Resource(
-                            type=self.stack_name.ROOT_STACK_TYPE,
-                            urn=self.stack_name.urn,
-                        ),
-                    )
-                )
+                self._load_resource(stack_resource_path)
             ]
         else:
             self.state.checkpoint.latest.resources = (
