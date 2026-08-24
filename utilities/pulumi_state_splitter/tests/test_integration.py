@@ -202,14 +202,15 @@ class TestPulumiIntegration(util.TmpDirTest):
         def pulumi_program_with_output():
             pulumi.export("test-output", test_string)
 
-        stack_with_output = self._create_stack(
-            "with-output", pulumi_program_with_output
-        )
-
         output_unsplitter = pulumi_state_splitter.split.Unsplitter(
             backend_dir=self._tmp_dir,
             stacks_names=None,
         )
+
+        with output_unsplitter:
+            stack_with_output = self._create_stack(
+                "with-output", pulumi_program_with_output
+            )
 
         with output_unsplitter:
             summary = stack_with_output.up().summary
