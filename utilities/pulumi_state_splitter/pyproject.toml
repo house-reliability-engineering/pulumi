@@ -16,7 +16,6 @@ dependencies = [
     "pydantic>=2.5.3,<3",
     "pyyaml>=6.0.1,<7",
     "click>=8.1.7,<9",
-    "style-tests",
 ]
 
 [project.scripts]
@@ -29,6 +28,7 @@ dev = [
     "pulumi-command>=0.10.0",
     "typeguard>=4.1.5,<5",
     "parameterized>=0.9.0,<0.10",
+    "style-tests",
 ]
 
 [tool.uv]
